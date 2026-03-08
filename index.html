@@ -26,56 +26,14 @@
 <!-- ═══════════════════════════════════════════════════════
      FIREBASE SDK v9 compat (global window, pas de module)
      ═══════════════════════════════════════════════════════ -->
-<!-- Firebase SDK — chargement dynamique multi-CDN -->
+<!-- Firebase SDK — chargement direct gstatic (le plus fiable) -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 <script>
-(function() {
-  // Liste de CDNs à essayer dans l'ordre
-  const CDNS = [
-    'https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js',
-    'https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.0/firebase-app-compat.min.js',
-    'https://cdn.jsdelivr.net/npm/firebase@9.22.0/compat/app/dist/index.js',
-    'https://unpkg.com/firebase@9.22.0/compat/app/dist/index.js'
-  ];
-  const AUTH_CDNS = [
-    'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js',
-    'https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.0/firebase-auth-compat.min.js',
-    'https://cdn.jsdelivr.net/npm/firebase@9.22.0/compat/auth/dist/index.js',
-    'https://unpkg.com/firebase@9.22.0/compat/auth/dist/index.js'
-  ];
-  const FS_CDNS = [
-    'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js',
-    'https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.0/firebase-firestore-compat.min.js',
-    'https://cdn.jsdelivr.net/npm/firebase@9.22.0/compat/firestore/dist/index.js',
-    'https://unpkg.com/firebase@9.22.0/compat/firestore/dist/index.js'
-  ];
-
-  function loadScript(url) {
-    return new Promise((resolve, reject) => {
-      const s = document.createElement('script');
-      s.src = url;
-      s.onload = resolve;
-      s.onerror = reject;
-      document.head.appendChild(s);
-    });
-  }
-
-  async function tryLoad(cdnList) {
-    for (const url of cdnList) {
-      try { await loadScript(url); return true; } catch(e) { continue; }
-    }
-    return false;
-  }
-
-  window._fbLoadPromise = (async () => {
-    const ok1 = await tryLoad(CDNS);
-    if (!ok1) { window._fbLoadFailed = true; return false; }
-    const ok2 = await tryLoad(AUTH_CDNS);
-    const ok3 = await tryLoad(FS_CDNS);
-    if (!ok2 || !ok3) { window._fbLoadFailed = true; return false; }
-    window._fbReady = true;
-    return true;
-  })();
-})();
+// Firebase chargé de façon synchrone — window.FB disponible immédiatement après init
+window._fbReady = (typeof firebase !== 'undefined');
+window._fbLoadPromise = Promise.resolve(window._fbReady);
 </script>
 <script>
 // ─── CONFIGURATION FIREBASE ─────────────────────────────
@@ -89,57 +47,25 @@ const FIREBASE_CONFIG = {
   measurementId:     "G-BVRWLN161L"
 };
 
-// window.FB stub — actif immédiatement, opérationnel après init
+// ── Initialisation Firebase directe ──────────────────────
 window.FB = null;
 
-// Initialisation Firebase dès le chargement — pas besoin d'attendre le login
-window._fbLoadPromise.then(async (loaded) => {
-  if (!loaded || typeof firebase === 'undefined') {
-    console.warn('🔥 Firebase SDK non disponible — mode offline uniquement');
-    const el = document.getElementById('fbStatus');
-    if (el) el.innerHTML = '<span style="color:var(--red)">❌ SDK non chargé</span>';
+(function initFirebase() {
+  if (typeof firebase === 'undefined') {
+    console.warn('Firebase SDK absent — mode offline');
     return;
   }
 
-  // Init Firebase compat
   if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
-  const db     = firebase.firestore();
+  const db = firebase.firestore();
   const fbAuth = firebase.auth();
 
-  // ── Forcer mode REST (évite WebChannel bloqué par certains réseaux/VPN) ──
-  db.settings({
-    experimentalForceLongPolling: true,
-    merge: true
-  });
+  db.settings({ experimentalForceLongPolling: true, merge: true });
+  db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
 
-  // ── Activer la persistance offline (cache local Firestore) ──
-  db.enablePersistence({ synchronizeTabs: true }).catch(e => {
-    if (e.code === 'failed-precondition') console.warn('Persistence: multi-onglets');
-    else if (e.code === 'unimplemented') console.warn('Persistence: non supportée');
-  });
-
-  // ── Auth anonyme avec retry ──
-  let authRetries = 0;
-  async function tryAuth() {
-    try {
-      await fbAuth.signInAnonymously();
-      const el = document.getElementById('fbStatus');
-      if (el) el.innerHTML = '<span style="color:var(--green)">✅ Connecté</span>';
-      console.log('🔥 Firebase Auth OK');
-    } catch(e) {
-      if (authRetries < 5) {
-        authRetries++;
-        setTimeout(tryAuth, 2000 * authRetries);
-      } else {
-        console.warn('Firebase auth échoué — mode local actif');
-      }
-    }
-  }
-  tryAuth();
-
-  const col   = (name)     => db.collection(name);
-  const docR  = (name, id) => db.collection(name).doc(id);
-  const tsNow = ()         => firebase.firestore.FieldValue.serverTimestamp();
+  const col   = (n)    => db.collection(n);
+  const docR  = (n,id) => db.collection(n).doc(id);
+  const tsNow = ()     => firebase.firestore.FieldValue.serverTimestamp();
 
   function toJS(doc) {
     if (!doc.exists) return null;
@@ -149,12 +75,10 @@ window._fbLoadPromise.then(async (loaded) => {
     });
     return { id: doc.id, ...d };
   }
-  function colToArray(snapshot) { return snapshot.docs.map(toJS); }
+  function colToArray(snap) { return snap.docs.map(toJS); }
 
-// ═══════════════════════════════════════════
-//  window.FB — toutes les fonctions Firebase
-// ═══════════════════════════════════════════
-window.FB = {};
+  // ── window.FB opérationnel immédiatement ──
+  window.FB = {};
 
 // ENTRIES
 window.FB.addEntry = async (entry) => {
@@ -352,12 +276,17 @@ window.FB.init = async () => {
   if (navigator.onLine) await flushOfflineQueue();
   console.log('🔥 Firebase prêt');
   console.log('🔥 Firebase connecté');
-  // Mettre à jour le statut dans l'UI admin
   const el = document.getElementById('fbStatus');
   if (el) el.innerHTML = '<span style="color:var(--green)">✅ Connecté à Firebase Firestore</span>';
 };
 
-}); // fin window._fbLoadPromise.then()
+  // ── Auth anonyme ──
+  fbAuth.signInAnonymously().catch(() => {
+    // Auth échouée — Firestore fonctionne quand même en lecture/écriture (règles test)
+    console.warn('Auth anonyme échouée — mode dégradé');
+  });
+
+})(); // fin initFirebase()
 </script>
 <style>
 :root {
