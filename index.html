@@ -31,12 +31,6 @@
 <script src="https://cdn.jsdelivr.net/npm/firebase@9.22.0/compat/auth/dist/index.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@9.22.0/compat/firestore/dist/index.js"></script>
 <script>
-// Firebase chargé de façon synchrone — window.FB disponible immédiatement après init
-window._fbReady = (typeof firebase !== 'undefined');
-window._fbLoadPromise = Promise.resolve(window._fbReady);
-</script>
-<script>
-// ─── CONFIGURATION FIREBASE ─────────────────────────────
 const FIREBASE_CONFIG = {
   apiKey:            "AIzaSyBGtXMiNDkZgW2QrpWHHH9mkEgGgMsjZy0",
   authDomain:        "vigilopro-4a63f.firebaseapp.com",
@@ -46,264 +40,8 @@ const FIREBASE_CONFIG = {
   appId:             "1:662305602141:web:5cdb95de155858221debb4",
   measurementId:     "G-BVRWLN161L"
 };
-
-// ── Initialisation Firebase directe ──────────────────────
-window.FB = null;
-
-(function initFirebase() {
-  if (typeof firebase === 'undefined') {
-    console.error('❌ Firebase SDK non chargé — vérifie la connexion internet');
-    return;
-  }
-  console.log('✅ Firebase SDK présent, initialisation...');
-  try {
-  if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
-  console.log('✅ firebase.initializeApp OK');
-  const db = firebase.firestore();
-  console.log('✅ firestore() OK');
-  const fbAuth = firebase.auth();
-  console.log('✅ auth() OK');
-
-  db.settings({ experimentalForceLongPolling: true, merge: true });
-  db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
-
-  const col   = (n)    => db.collection(n);
-  const docR  = (n,id) => db.collection(n).doc(id);
-  const tsNow = ()     => firebase.firestore.FieldValue.serverTimestamp();
-
-  function toJS(doc) {
-    if (!doc.exists) return null;
-    const d = doc.data();
-    Object.keys(d).forEach(k => {
-      if (d[k] && typeof d[k].toDate === 'function') d[k] = d[k].toDate().toISOString();
-    });
-    return { id: doc.id, ...d };
-  }
-  function colToArray(snap) { return snap.docs.map(toJS); }
-
-  // ── window.FB opérationnel ──
-  window.FB = {};
-  console.log('✅ window.FB assigné');
-
-// ENTRIES
-window.FB.addEntry = async (entry) => {
-  try { const r = await col('entries').add({ ...entry, createdAt: tsNow() }); return r.id; }
-  catch(e) { console.error('FB.addEntry:', e); return null; }
-};
-window.FB.deleteEntry = async (id) => {
-  try { await docR('entries', id).delete(); } catch(e) { console.error(e); }
-};
-window.FB.listenEntries = (agentName, cb) => {
-  return col('entries').where('agent','==',agentName)
-    .onSnapshot(snap => {
-      S.entries = colToArray(snap).sort((a,b) => (a.createdAt||a.time||'') < (b.createdAt||b.time||'') ? 1 : -1);
-      cb(S.entries);
-    }, e => console.error(e));
-};
-window.FB.listenAllEntries = (cb) => {
-  return col('entries')
-    .onSnapshot(snap => {
-      S.entries = colToArray(snap).sort((a,b) => (a.createdAt||a.time||'') < (b.createdAt||b.time||'') ? 1 : -1);
-      cb(S.entries);
-    }, e => console.error(e));
-};
-
-// PATROLS
-window.FB.startPatrol = async (patrol) => {
-  try { const r = await col('patrols').add({ ...patrol, startedAt: tsNow() }); return r.id; }
-  catch(e) { console.error('FB.startPatrol:', e); return null; }
-};
-window.FB.updatePatrol = async (id, data) => {
-  try { await docR('patrols', id).update({ ...data, updatedAt: tsNow() }); } catch(e) { console.error(e); }
-};
-window.FB.listenPatrols = (agentName, cb) => {
-  return col('patrols').where('agent','==',agentName)
-    .onSnapshot(snap => cb(colToArray(snap).sort((a,b)=>(a.startedAt||'') < (b.startedAt||'') ? 1:-1)), e => console.error(e));
-};
-window.FB.listenAllPatrols = (cb) => {
-  return col('patrols')
-    .onSnapshot(snap => cb(colToArray(snap).sort((a,b)=>(a.startedAt||'') < (b.startedAt||'') ? 1:-1)), e => console.error(e));
-};
-
-// MESSAGES
-window.FB.sendMessage = async (msg) => {
-  try { const r = await col('messages').add({ ...msg, sentAt: tsNow() }); return r.id; }
-  catch(e) { console.error('FB.sendMessage:', e); return null; }
-};
-window.FB.listenMessages = (user, cb) => {
-  return col('messages')
-    .onSnapshot(snap => {
-      const all = colToArray(snap)
-        .filter(m => {
-          if (user === 'admin') return m.to === 'admin' || m.from === 'admin';
-          // Pour un agent : messages envoyés par lui ou destinés à lui
-          return m.from === user || m.to === user || m.to === 'agent';
-        })
-        .sort((a,b) => (a.sentAt||a.date||'') > (b.sentAt||b.date||'') ? 1 : -1);
-      cb(all);
-    }, e => console.error(e));
-};
-window.FB.markRead = async (msgId) => {
-  try { await docR('messages', msgId).update({ read: true }); } catch(e) {}
-};
-
-// PLANNING
-window.FB.savePlanning = async (v) => {
-  try {
-    if(v.id && !String(v.id).startsWith('local_')) { await docR('planning', String(v.id)).set({ ...v, updatedAt: tsNow() }); }
-    else { const r = await col('planning').add({ ...v, createdAt: tsNow() }); return r.id; }
-  } catch(e) { console.error('FB.savePlanning:', e); return null; }
-};
-window.FB.deletePlanning = async (id) => {
-  try { await docR('planning', String(id)).delete(); } catch(e) { console.error(e); }
-};
-window.FB.listenPlanning = (cb) => {
-  return col('planning')
-    .onSnapshot(snap => {
-      S.planning = colToArray(snap).sort((a,b) => (a.date||'') > (b.date||'') ? 1 : -1);
-      cb(S.planning);
-    }, e => console.error(e));
-};
-
-// ARCHIVES
-window.FB.saveArchive = async (archive) => {
-  try {
-    const id = archive.id ? String(archive.id) : Date.now().toString();
-    await docR('archives', id).set({ ...archive, savedAt: tsNow() });
-    return id;
-  } catch(e) { console.error('FB.saveArchive:', e); return null; }
-};
-window.FB.updateArchive = async (id, data) => {
-  try { await docR('archives', String(id)).update({ ...data, updatedAt: tsNow() }); } catch(e) { console.error(e); }
-};
-window.FB.listenArchives = (cb) => {
-  return col('archives')
-    .onSnapshot(snap => {
-      const archives = colToArray(snap).sort((a,b) => {
-        // Tri côté client par date/heure décroissant
-        const da = a.savedAt || a.date || '';
-        const db2 = b.savedAt || b.date || '';
-        return da < db2 ? 1 : -1;
-      });
-      S.archives = archives;
-      cb(archives);
-    }, e => console.error('listenArchives:', e));
-};
-
-// ACCOUNTS
-window.FB.loadAccounts = async () => {
-  try { const s = await col('accounts').get(); const a = colToArray(s); if(a.length) S.accounts=a; return a; }
-  catch(e) { console.error('FB.loadAccounts:', e); return []; }
-};
-window.FB.saveAccount = async (account) => {
-  try { await docR('accounts', String(account.id)).set({ ...account, updatedAt: tsNow() }); }
-  catch(e) { console.error('FB.saveAccount:', e); }
-};
-window.FB.deleteAccount = async (id) => {
-  try { await docR('accounts', String(id)).delete(); } catch(e) { console.error(e); }
-};
-
-// CONFIG
-window.FB.loadConfig = async () => {
-  try { const s = await docR('config','main').get(); return s.exists ? s.data() : null; }
-  catch(e) { console.error('FB.loadConfig:', e); return null; }
-};
-window.FB.saveConfigFB = async (config) => {
-  try { await docR('config','main').set({ ...config, updatedAt: tsNow() }); }
-  catch(e) { console.error('FB.saveConfigFB:', e); }
-};
-
-// NON-CONFORMITÉS
-window.FB.saveNC = async (nc) => {
-  try { await docR('nonConformites', String(nc.id)).set({ ...nc, updatedAt: tsNow() }); }
-  catch(e) { console.error('FB.saveNC:', e); }
-};
-window.FB.listenNC = (cb) => {
-  return col('nonConformites')
-    .onSnapshot(snap => {
-      const ncs = colToArray(snap).sort((a,b) => {
-        const da = a.updatedAt || a.date || '';
-        const db2 = b.updatedAt || b.date || '';
-        return da < db2 ? 1 : -1;
-      });
-      S.nonConformites = ncs;
-      cb(ncs);
-    }, e => console.error('listenNC:', e));
-};
-
-// DOCS / CERTIFICATIONS
-window.FB.saveDocs = async (agentId, docs) => {
-  try { await docR('agentDocs', agentId).set({ docs, updatedAt: tsNow() }); } catch(e) { console.error(e); }
-};
-window.FB.loadDocs = async (agentId) => {
-  try { const s = await docR('agentDocs', agentId).get(); return s.exists ? s.data().docs : {}; }
-  catch(e) { return {}; }
-};
-
-// OFFLINE FLUSH
-window.FB.isOnline = () => navigator.onLine;
-
-async function flushOfflineQueue() {
-  const queue = JSON.parse(localStorage.getItem('vp3_offlineQueue') || '[]');
-  if (!queue.length) return;
-  const remaining = [];
-  for (const item of queue) {
-    try {
-      if (item.type==='entry')   await window.FB.addEntry(item.data);
-      if (item.type==='patrol')  await window.FB.startPatrol(item.data);
-      if (item.type==='message') await window.FB.sendMessage(item.data);
-      if (item.type==='archive') await window.FB.saveArchive(item.data);
-      if (item.type==='nc')      await window.FB.saveNC(item.data);
-    } catch(e) { remaining.push(item); }
-  }
-  localStorage.setItem('vp3_offlineQueue', JSON.stringify(remaining));
-  if (remaining.length < queue.length) console.log(`✅ ${queue.length - remaining.length} élément(s) synchronisé(s)`);
-}
-window.addEventListener('online',  () => { showToast('📶 Connexion rétablie — sync...'); setTimeout(flushOfflineQueue, 1000); });
-window.addEventListener('offline', () => showToast('📵 Hors-ligne — données locales', true));
-
-// INIT
-window.FB.init = async () => {
-  console.log('🔥 Firebase init...');
-  const [fbAccounts, fbConfig] = await Promise.all([window.FB.loadAccounts(), window.FB.loadConfig()]);
-  if (fbAccounts.length) {
-    S.accounts = fbAccounts;
-    localStorage.setItem('vp3_accounts', JSON.stringify(fbAccounts));
-  } else if (S.accounts.length) {
-    for (const acc of S.accounts) await window.FB.saveAccount(acc);
-  }
-  if (fbConfig) {
-    S.config = { ...S.config, ...fbConfig };
-    localStorage.setItem('vp3_config', JSON.stringify(S.config));
-  } else if (S.config) {
-    await window.FB.saveConfigFB(S.config);
-  }
-  if (navigator.onLine) await flushOfflineQueue();
-  console.log('🔥 Firebase prêt');
-  const el = document.getElementById('fbStatus');
-  if (el) el.innerHTML = '<span style="color:var(--green)">✅ Connecté à Firebase Firestore</span>';
-};
-
-  // ── Auth anonyme ──
-  fbAuth.signInAnonymously().catch(() => {
-    console.warn('Auth anonyme échouée — mode dégradé');
-  });
-
-  console.log('✅ window.FB prêt');
-
-  } catch(err) {
-    console.error('❌ initFirebase() ERREUR:', err.message, err.stack);
-    window.FB = null;
-  }
-
-})(); // fin initFirebase()
+window.FB = null; // sera assigné après que S soit défini
 </script>
-<style>
-:root {
-  --black:#000; --bg1:#0a0a0a; --bg2:#111; --bg3:#1a1a1a; --bg4:#222; --bg5:#2a2a2a;
-  --gold:#FFD700; --gold2:#FFA500; --gold-dim:rgba(255,215,0,.12); --gold-glow:rgba(255,215,0,.25);
-  --red:#FF3B4E; --red2:#E74C3C; --red-dim:rgba(255,59,78,.15);
-  --green:#4CAF50; --green2:#45A049; --green-dim:rgba(76,175,80,.15);
   --blue:#2196F3; --blue2:#1565C0; --blue-dim:rgba(33,150,243,.15);
   --purple:#9C27B0; --purple2:#6A1B9A; --purple-dim:rgba(156,39,176,.15);
   --orange:#FF9800; --orange-dim:rgba(255,152,0,.15);
@@ -1765,6 +1503,94 @@ let S = {
   signatureData: null, pendingArchiveForSign: null,
   reminderTimeout: null
 };
+
+
+<script>
+// ── initFirebase appelé ICI — S est déjà défini ──
+(function() {
+  if (typeof firebase === 'undefined') return;
+  if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+  const db = firebase.firestore();
+  const fbAuth = firebase.auth();
+  db.settings({ experimentalForceLongPolling: true, merge: true });
+  db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
+  const col   = (n)    => db.collection(n);
+  const docR  = (n,id) => db.collection(n).doc(id);
+  const tsNow = ()     => firebase.firestore.FieldValue.serverTimestamp();
+  function toJS(doc) {
+    if (!doc.exists) return null;
+    const d = doc.data();
+    Object.keys(d).forEach(k => {
+      if (d[k] && typeof d[k].toDate === 'function') d[k] = d[k].toDate().toISOString();
+    });
+    return { id: doc.id, ...d };
+  }
+  function colToArray(snap) { return snap.docs.map(toJS); }
+  function flushOfflineQueue() {
+    const queue = JSON.parse(localStorage.getItem('vp3_offlineQueue') || '[]');
+    if (!queue.length) return;
+    const remaining = [];
+    for (const item of queue) {
+      try {
+        if (item.type==='entry')   window.FB.addEntry(item.data);
+        if (item.type==='message') window.FB.sendMessage(item.data);
+        if (item.type==='archive') window.FB.saveArchive(item.data);
+        if (item.type==='nc')      window.FB.saveNC(item.data);
+      } catch(e) { remaining.push(item); }
+    }
+    localStorage.setItem('vp3_offlineQueue', JSON.stringify(remaining));
+  }
+  window.addEventListener('online',  () => setTimeout(flushOfflineQueue, 1000));
+
+  window.FB = {
+    addEntry:      async (e)    => { try { return (await col('entries').add({...e, createdAt:tsNow()})).id; } catch(x) { return null; } },
+    deleteEntry:   async (id)   => { try { await docR('entries',id).delete(); } catch(x) {} },
+    listenEntries: (agent, cb)  => col('entries').where('agent','==',agent).onSnapshot(s => { S.entries=colToArray(s).sort((a,b)=>a.createdAt<b.createdAt?1:-1); cb(S.entries); }),
+    listenAllEntries: (cb)      => col('entries').onSnapshot(s => { S.entries=colToArray(s); cb(S.entries); }),
+    startPatrol:   async (p)    => { try { return (await col('patrols').add({...p,startedAt:tsNow()})).id; } catch(x){return null;} },
+    updatePatrol:  async (id,d) => { try { await docR('patrols',id).update({...d,updatedAt:tsNow()}); } catch(x){} },
+    listenPatrols: (agent,cb)   => col('patrols').where('agent','==',agent).onSnapshot(s=>cb(colToArray(s))),
+    listenAllPatrols: (cb)      => col('patrols').onSnapshot(s=>cb(colToArray(s))),
+    sendMessage:   async (m)    => { try { return (await col('messages').add({...m,sentAt:tsNow()})).id; } catch(x){return null;} },
+    listenMessages:(user,cb)    => col('messages').onSnapshot(s => {
+      const all = colToArray(s).filter(m => user==='admin' ? (m.to==='admin'||m.from==='admin') : (m.from===user||m.to===user||m.to==='agent')).sort((a,b)=>(a.sentAt||'')>(b.sentAt||'')?1:-1);
+      cb(all);
+    }),
+    markRead:      async (id)   => { try { await docR('messages',id).update({read:true}); } catch(x){} },
+    savePlanning:  async (v)    => { try { if(v.id&&!String(v.id).startsWith('local_')) { await docR('planning',String(v.id)).set({...v,updatedAt:tsNow()}); } else { return (await col('planning').add({...v,createdAt:tsNow()})).id; } } catch(x){return null;} },
+    deletePlanning:async (id)   => { try { await docR('planning',String(id)).delete(); } catch(x){} },
+    listenPlanning:(cb)         => col('planning').onSnapshot(s => { S.planning=colToArray(s); cb(S.planning); }),
+    saveArchive:   async (a)    => { try { const id=String(a.id||Date.now()); await docR('archives',id).set({...a,savedAt:tsNow()}); return id; } catch(x){return null;} },
+    updateArchive: async (id,d) => { try { await docR('archives',String(id)).update({...d,updatedAt:tsNow()}); } catch(x){} },
+    listenArchives:(cb)         => col('archives').onSnapshot(s => { S.archives=colToArray(s).sort((a,b)=>a.savedAt<b.savedAt?1:-1); cb(S.archives); }),
+    loadAccounts:  async ()     => { try { const s=await col('accounts').get(); const a=colToArray(s); if(a.length)S.accounts=a; return a; } catch(x){return[];} },
+    saveAccount:   async (a)    => { try { await docR('accounts',String(a.id)).set({...a,updatedAt:tsNow()}); } catch(x){} },
+    deleteAccount: async (id)   => { try { await docR('accounts',String(id)).delete(); } catch(x){} },
+    loadConfig:    async ()     => { try { const s=await docR('config','main').get(); return s.exists?s.data():null; } catch(x){return null;} },
+    saveConfigFB:  async (c)    => { try { await docR('config','main').set({...c,updatedAt:tsNow()}); } catch(x){} },
+    saveNC:        async (nc)   => { try { await docR('nonConformites',String(nc.id)).set({...nc,updatedAt:tsNow()}); } catch(x){} },
+    listenNC:      (cb)         => col('nonConformites').onSnapshot(s => { S.nonConformites=colToArray(s); cb(S.nonConformites); }),
+    saveDocs:      async (aid,d)=> { try { await docR('agentDocs',aid).set({docs:d,updatedAt:tsNow()}); } catch(x){} },
+    loadDocs:      async (aid)  => { try { const s=await docR('agentDocs',aid).get(); return s.exists?s.data().docs:{}; } catch(x){return{};} },
+    isOnline:      ()           => navigator.onLine,
+    init: async () => {
+      const [accs, cfg] = await Promise.all([window.FB.loadAccounts(), window.FB.loadConfig()]);
+      if (accs.length) { S.accounts=accs; localStorage.setItem('vp3_accounts',JSON.stringify(accs)); }
+      else if (S.accounts.length) { for(const a of S.accounts) await window.FB.saveAccount(a); }
+      if (cfg) { S.config={...S.config,...cfg}; localStorage.setItem('vp3_config',JSON.stringify(S.config)); }
+      else if (S.config) { await window.FB.saveConfigFB(S.config); }
+      flushOfflineQueue();
+      const el = document.getElementById('fbStatus');
+      if (el) el.innerHTML = '<span style="color:#4CAF50">✅ Firebase connecté</span>';
+      console.log('✅ window.FB.init() OK');
+    }
+  };
+
+  fbAuth.signInAnonymously().catch(() => {});
+  console.log('✅ window.FB prêt');
+})();
+</script>
+}
 
 let clockInterval = null;
 
