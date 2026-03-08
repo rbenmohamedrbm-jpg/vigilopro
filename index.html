@@ -2,46 +2,16 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>VigiloPro — Sécurité 2.0</title>
-
-<!-- PWA -->
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#000000">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="VigiloPro">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="application-name" content="VigiloPro">
-<meta name="description" content="La main courante intelligente pour la sécurité privée">
-
-<!-- Icône Apple (iOS) -->
-<link rel="apple-touch-icon" href="icon-192.png">
-<!-- Splash screen iOS -->
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
-
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Share+Tech+Mono&family=Cormorant:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
-<!-- ═══════════════════════════════════════════════════════
-     FIREBASE SDK v9 compat (global window, pas de module)
-     ═══════════════════════════════════════════════════════ -->
-<!-- Firebase SDK v9 compat -->
-<script src="https://cdn.jsdelivr.net/npm/firebase@9.22.0/compat/app/dist/index.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/firebase@9.22.0/compat/auth/dist/index.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/firebase@9.22.0/compat/firestore/dist/index.js"></script>
-<script>
-const FIREBASE_CONFIG = {
-  apiKey:            "AIzaSyBGtXMiNDkZgW2QrpWHHH9mkEgGgMsjZy0",
-  authDomain:        "vigilopro-4a63f.firebaseapp.com",
-  projectId:         "vigilopro-4a63f",
-  storageBucket:     "vigilopro-4a63f.firebasestorage.app",
-  messagingSenderId: "662305602141",
-  appId:             "1:662305602141:web:5cdb95de155858221debb4",
-  measurementId:     "G-BVRWLN161L"
-};
-window.FB = null; // sera assigné après que S soit défini
-</script>
+<style>
+:root {
+  --black:#000; --bg1:#0a0a0a; --bg2:#111; --bg3:#1a1a1a; --bg4:#222; --bg5:#2a2a2a;
+  --gold:#FFD700; --gold2:#FFA500; --gold-dim:rgba(255,215,0,.12); --gold-glow:rgba(255,215,0,.25);
+  --red:#FF3B4E; --red2:#E74C3C; --red-dim:rgba(255,59,78,.15);
+  --green:#4CAF50; --green2:#45A049; --green-dim:rgba(76,175,80,.15);
   --blue:#2196F3; --blue2:#1565C0; --blue-dim:rgba(33,150,243,.15);
   --purple:#9C27B0; --purple2:#6A1B9A; --purple-dim:rgba(156,39,176,.15);
   --orange:#FF9800; --orange-dim:rgba(255,152,0,.15);
@@ -314,43 +284,21 @@ body{background:var(--black);color:var(--text);font-family:'Cormorant Garamond',
 
 <!-- =========== LOGIN =========== -->
 <!-- =========== ONBOARDING =========== -->
-<div id="screen-onboarding" class="screen" style="background:linear-gradient(180deg,#000 0%,#0a0a0a 100%);padding:0;justify-content:flex-start">
+<div id="screen-onboarding" class="screen" style="background:linear-gradient(180deg,#000 0%,#0a0a1a 100%);padding:0;justify-content:flex-start">
   <div id="ob-step-0" class="ob-step" style="display:flex;flex-direction:column;height:100vh;padding:40px 28px 32px">
     <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center">
-      <!-- Logo VP -->
-      <div style="margin-bottom:28px">
-        <svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style="stop-color:#FFD700"/>
-              <stop offset="100%" style="stop-color:#FFA500"/>
-            </linearGradient>
-            <filter id="glow">
-              <feGaussianBlur stdDeviation="3" result="blur"/>
-              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-            </filter>
-          </defs>
-          <!-- Shield shape -->
-          <path d="M50 8 L88 24 L88 52 C88 72 70 88 50 95 C30 88 12 72 12 52 L12 24 Z" fill="url(#shieldGrad)" filter="url(#glow)"/>
-          <path d="M50 14 L82 28 L82 52 C82 69 66 83 50 89 C34 83 18 69 18 52 L18 28 Z" fill="#1a1000"/>
-          <!-- VP text -->
-          <text x="50" y="62" text-anchor="middle" font-family="'Cormorant Garamond',serif" font-size="26" font-weight="700" fill="#FFD700" letter-spacing="1">VP</text>
-        </svg>
-      </div>
-      <div style="font-family:'Cormorant Garamond',serif;font-size:34px;font-weight:700;color:var(--gold);margin-bottom:6px;letter-spacing:1px">VigiloPro</div>
-      <div style="font-size:11px;color:var(--text4);font-family:'Share Tech Mono',monospace;letter-spacing:2px;margin-bottom:32px">SÉCURITÉ PRIVÉE 2.0</div>
-      <div style="display:flex;flex-direction:column;gap:10px;width:100%">
-        <div style="display:flex;align-items:center;gap:14px;background:rgba(255,215,0,.05);border:1px solid rgba(255,215,0,.15);border-radius:14px;padding:14px 16px">
-          <div style="width:36px;height:36px;border-radius:10px;background:rgba(255,215,0,.12);display:flex;align-items:center;justify-content:center;font-size:18px">👮</div>
-          <div style="text-align:left"><div style="font-size:13px;color:#fff;font-weight:600">Agent</div><div style="font-size:11px;color:var(--text4)">Rondes, main courante, rapports</div></div>
+      <div style="width:90px;height:90px;border-radius:24px;background:linear-gradient(135deg,var(--gold),var(--gold2));display:flex;align-items:center;justify-content:center;font-size:44px;margin-bottom:24px;box-shadow:0 0 40px rgba(255,215,0,.3)">🛡️</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:700;color:var(--gold);margin-bottom:8px">VigiloPro</div>
+      <div style="font-size:13px;color:var(--text3);margin-bottom:32px;line-height:1.6">La main courante intelligente<br>pour la sécurité privée</div>
+      <div style="display:flex;flex-direction:column;gap:12px;width:100%">
+        <div style="display:flex;align-items:center;gap:14px;background:var(--bg3);border-radius:14px;padding:14px 16px">
+          <span style="font-size:24px">👮</span><div style="text-align:left"><div style="font-size:13px;color:#fff;font-weight:600">Agent</div><div style="font-size:11px;color:var(--text4)">Rondes, main courante, rapports</div></div>
         </div>
-        <div style="display:flex;align-items:center;gap:14px;background:rgba(33,150,243,.05);border:1px solid rgba(33,150,243,.15);border-radius:14px;padding:14px 16px">
-          <div style="width:36px;height:36px;border-radius:10px;background:rgba(33,150,243,.12);display:flex;align-items:center;justify-content:center;font-size:18px">⚙️</div>
-          <div style="text-align:left"><div style="font-size:13px;color:#fff;font-weight:600">Employeur</div><div style="font-size:11px;color:var(--text4)">Sites, planning, RH, facturation</div></div>
+        <div style="display:flex;align-items:center;gap:14px;background:var(--bg3);border-radius:14px;padding:14px 16px">
+          <span style="font-size:24px">⚙️</span><div style="text-align:left"><div style="font-size:13px;color:#fff;font-weight:600">Employeur</div><div style="font-size:11px;color:var(--text4)">Sites, planning, RH, facturation</div></div>
         </div>
-        <div style="display:flex;align-items:center;gap:14px;background:rgba(76,175,80,.05);border:1px solid rgba(76,175,80,.15);border-radius:14px;padding:14px 16px">
-          <div style="width:36px;height:36px;border-radius:10px;background:rgba(76,175,80,.12);display:flex;align-items:center;justify-content:center;font-size:18px">🏢</div>
-          <div style="text-align:left"><div style="font-size:13px;color:#fff;font-weight:600">Client</div><div style="font-size:11px;color:var(--text4)">Suivi live, NC, validation rapports</div></div>
+        <div style="display:flex;align-items:center;gap:14px;background:var(--bg3);border-radius:14px;padding:14px 16px">
+          <span style="font-size:24px">🏢</span><div style="text-align:left"><div style="font-size:13px;color:#fff;font-weight:600">Client</div><div style="font-size:11px;color:var(--text4)">Suivi live, NC, validation rapports</div></div>
         </div>
       </div>
     </div>
@@ -513,6 +461,11 @@ body{background:var(--black);color:var(--text);font-family:'Cormorant Garamond',
     <div class="checkin-title">📋 Prise de Poste</div>
     <div class="checkin-sub">Enregistrement début de vacation</div>
   </div>
+  <div class="photo-zone" onclick="simulatePhoto()">
+    <div class="pz-icon" id="pzIcon">📷</div>
+    <div class="pz-text" id="pzText">Photo de prise de poste</div>
+    <div class="pz-sub">Appuyez pour prendre une photo</div>
+  </div>
   <div class="checkin-form">
     <label class="form-label">Agent</label>
     <input class="form-input" type="text" id="checkinAgent" readonly>
@@ -602,10 +555,10 @@ body{background:var(--black);color:var(--text);font-family:'Cormorant Garamond',
             <span style="font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:700;color:#fff">Main Courante</span>
             <span style="font-size:10px;color:rgba(255,255,255,.7)">Saisir événement</span>
           </button>
-          <button style="background:linear-gradient(135deg,#E53935,#B71C1C);border:none;border-radius:16px;padding:20px 14px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px" onclick="openAnomalieReport()">
-            <span style="font-size:30px">📸</span>
-            <span style="font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:700;color:#fff">Rapport Anomalie</span>
-            <span style="font-size:10px;color:rgba(255,255,255,.7)">Photo + géoloc</span>
+          <button style="background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;border-radius:16px;padding:20px 14px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px" onclick="switchTab('monespace')">
+            <span style="font-size:30px">👤</span>
+            <span style="font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:700;color:#000">Mon Espace</span>
+            <span style="font-size:10px;color:rgba(0,0,0,.55)">Heures & certifs</span>
           </button>
           <button style="background:linear-gradient(135deg,#7B1FA2,#6A1B9A);border:none;border-radius:16px;padding:20px 14px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;position:relative" onclick="switchTab('messages')">
             <span style="font-size:30px">💬</span>
@@ -744,6 +697,7 @@ body{background:var(--black);color:var(--text);font-family:'Cormorant Garamond',
           <button class="cat-btn" data-cat="Accès" data-sev="normal" onclick="selCat(this)"><span class="ci">🚪</span><span class="cl">Accès</span></button>
           <button class="cat-btn" data-cat="Incident" data-sev="critique" onclick="selCat(this)"><span class="ci">⚠️</span><span class="cl">Incident</span></button>
           <button class="cat-btn" data-cat="Intervention" data-sev="urgent" onclick="selCat(this)"><span class="ci">🏃</span><span class="cl">Intervention</span></button>
+          <button class="cat-btn" data-cat="Livraison" data-sev="info" onclick="selCat(this)"><span class="ci">📦</span><span class="cl">Livraison</span></button>
           <button class="cat-btn" data-cat="Visiteur" data-sev="info" onclick="selCat(this)"><span class="ci">👤</span><span class="cl">Visiteur</span></button>
           <button class="cat-btn" data-cat="Technique" data-sev="normal" onclick="selCat(this)"><span class="ci">🔧</span><span class="cl">Technique</span></button>
           <button class="cat-btn" data-cat="Autre" data-sev="info" onclick="selCat(this)"><span class="ci">📌</span><span class="cl">Autre</span></button>
@@ -1101,24 +1055,6 @@ body{background:var(--black);color:var(--text);font-family:'Cormorant Garamond',
     <div id="atab-sites" class="tab-page">
       <div class="page-header"><div><div class="page-title page-title-admin">Sites & Clients</div><div class="page-subtitle">Configuration emails & sites</div></div></div>
       <div style="padding:0 20px">
-
-        <!-- 🔥 PANNEAU FIREBASE CONFIG -->
-        <div id="firebaseConfigPanel" style="background:rgba(255,160,0,.06);border:1px solid rgba(255,160,0,.4);border-radius:14px;padding:16px;margin-bottom:16px">
-          <div style="font-size:11px;color:#FFA500;font-family:'Share Tech Mono',monospace;margin-bottom:10px">🔥 CONFIGURATION FIREBASE</div>
-          <div id="fbStatusLine" style="font-size:12px;color:var(--text3);margin-bottom:12px">
-            Statut : <span id="fbStatus" style="color:#888">Non configuré</span>
-          </div>
-          <div style="font-size:11px;color:var(--text4);margin-bottom:12px;line-height:1.6">
-            1. Va sur <strong style="color:#FFA500">console.firebase.google.com</strong><br>
-            2. Crée un projet → Ajoute une app Web<br>
-            3. Copie ta config dans le fichier HTML (section FIREBASE_CONFIG)<br>
-            4. Active Firestore Database + Auth anonyme dans la console
-          </div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <button onclick="testFirebaseConnection()" style="background:rgba(255,160,0,.12);border:1px solid #FFA500;border-radius:8px;padding:10px 14px;font-family:'Cormorant Garamond',serif;font-size:13px;font-weight:700;color:#FFA500;cursor:pointer">🔥 Tester la connexion</button>
-            <button onclick="pushAllDataToFirebase()" style="background:rgba(79,195,247,.1);border:1px solid var(--blue);border-radius:8px;padding:10px 14px;font-family:'Cormorant Garamond',serif;font-size:13px;font-weight:700;color:var(--blue);cursor:pointer">☁️ Pousser données locales</button>
-          </div>
-        </div>
 
         <!-- Logo société — réservé Admin -->
         <div style="background:var(--bg3);border:1px solid var(--gold);border-radius:14px;padding:16px;margin-bottom:16px">
@@ -1504,94 +1440,6 @@ let S = {
   reminderTimeout: null
 };
 
-
-<script>
-// ── initFirebase appelé ICI — S est déjà défini ──
-(function() {
-  if (typeof firebase === 'undefined') return;
-  if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
-  const db = firebase.firestore();
-  const fbAuth = firebase.auth();
-  db.settings({ experimentalForceLongPolling: true, merge: true });
-  db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
-  const col   = (n)    => db.collection(n);
-  const docR  = (n,id) => db.collection(n).doc(id);
-  const tsNow = ()     => firebase.firestore.FieldValue.serverTimestamp();
-  function toJS(doc) {
-    if (!doc.exists) return null;
-    const d = doc.data();
-    Object.keys(d).forEach(k => {
-      if (d[k] && typeof d[k].toDate === 'function') d[k] = d[k].toDate().toISOString();
-    });
-    return { id: doc.id, ...d };
-  }
-  function colToArray(snap) { return snap.docs.map(toJS); }
-  function flushOfflineQueue() {
-    const queue = JSON.parse(localStorage.getItem('vp3_offlineQueue') || '[]');
-    if (!queue.length) return;
-    const remaining = [];
-    for (const item of queue) {
-      try {
-        if (item.type==='entry')   window.FB.addEntry(item.data);
-        if (item.type==='message') window.FB.sendMessage(item.data);
-        if (item.type==='archive') window.FB.saveArchive(item.data);
-        if (item.type==='nc')      window.FB.saveNC(item.data);
-      } catch(e) { remaining.push(item); }
-    }
-    localStorage.setItem('vp3_offlineQueue', JSON.stringify(remaining));
-  }
-  window.addEventListener('online',  () => setTimeout(flushOfflineQueue, 1000));
-
-  window.FB = {
-    addEntry:      async (e)    => { try { return (await col('entries').add({...e, createdAt:tsNow()})).id; } catch(x) { return null; } },
-    deleteEntry:   async (id)   => { try { await docR('entries',id).delete(); } catch(x) {} },
-    listenEntries: (agent, cb)  => col('entries').where('agent','==',agent).onSnapshot(s => { S.entries=colToArray(s).sort((a,b)=>a.createdAt<b.createdAt?1:-1); cb(S.entries); }),
-    listenAllEntries: (cb)      => col('entries').onSnapshot(s => { S.entries=colToArray(s); cb(S.entries); }),
-    startPatrol:   async (p)    => { try { return (await col('patrols').add({...p,startedAt:tsNow()})).id; } catch(x){return null;} },
-    updatePatrol:  async (id,d) => { try { await docR('patrols',id).update({...d,updatedAt:tsNow()}); } catch(x){} },
-    listenPatrols: (agent,cb)   => col('patrols').where('agent','==',agent).onSnapshot(s=>cb(colToArray(s))),
-    listenAllPatrols: (cb)      => col('patrols').onSnapshot(s=>cb(colToArray(s))),
-    sendMessage:   async (m)    => { try { return (await col('messages').add({...m,sentAt:tsNow()})).id; } catch(x){return null;} },
-    listenMessages:(user,cb)    => col('messages').onSnapshot(s => {
-      const all = colToArray(s).filter(m => user==='admin' ? (m.to==='admin'||m.from==='admin') : (m.from===user||m.to===user||m.to==='agent')).sort((a,b)=>(a.sentAt||'')>(b.sentAt||'')?1:-1);
-      cb(all);
-    }),
-    markRead:      async (id)   => { try { await docR('messages',id).update({read:true}); } catch(x){} },
-    savePlanning:  async (v)    => { try { if(v.id&&!String(v.id).startsWith('local_')) { await docR('planning',String(v.id)).set({...v,updatedAt:tsNow()}); } else { return (await col('planning').add({...v,createdAt:tsNow()})).id; } } catch(x){return null;} },
-    deletePlanning:async (id)   => { try { await docR('planning',String(id)).delete(); } catch(x){} },
-    listenPlanning:(cb)         => col('planning').onSnapshot(s => { S.planning=colToArray(s); cb(S.planning); }),
-    saveArchive:   async (a)    => { try { const id=String(a.id||Date.now()); await docR('archives',id).set({...a,savedAt:tsNow()}); return id; } catch(x){return null;} },
-    updateArchive: async (id,d) => { try { await docR('archives',String(id)).update({...d,updatedAt:tsNow()}); } catch(x){} },
-    listenArchives:(cb)         => col('archives').onSnapshot(s => { S.archives=colToArray(s).sort((a,b)=>a.savedAt<b.savedAt?1:-1); cb(S.archives); }),
-    loadAccounts:  async ()     => { try { const s=await col('accounts').get(); const a=colToArray(s); if(a.length)S.accounts=a; return a; } catch(x){return[];} },
-    saveAccount:   async (a)    => { try { await docR('accounts',String(a.id)).set({...a,updatedAt:tsNow()}); } catch(x){} },
-    deleteAccount: async (id)   => { try { await docR('accounts',String(id)).delete(); } catch(x){} },
-    loadConfig:    async ()     => { try { const s=await docR('config','main').get(); return s.exists?s.data():null; } catch(x){return null;} },
-    saveConfigFB:  async (c)    => { try { await docR('config','main').set({...c,updatedAt:tsNow()}); } catch(x){} },
-    saveNC:        async (nc)   => { try { await docR('nonConformites',String(nc.id)).set({...nc,updatedAt:tsNow()}); } catch(x){} },
-    listenNC:      (cb)         => col('nonConformites').onSnapshot(s => { S.nonConformites=colToArray(s); cb(S.nonConformites); }),
-    saveDocs:      async (aid,d)=> { try { await docR('agentDocs',aid).set({docs:d,updatedAt:tsNow()}); } catch(x){} },
-    loadDocs:      async (aid)  => { try { const s=await docR('agentDocs',aid).get(); return s.exists?s.data().docs:{}; } catch(x){return{};} },
-    isOnline:      ()           => navigator.onLine,
-    init: async () => {
-      const [accs, cfg] = await Promise.all([window.FB.loadAccounts(), window.FB.loadConfig()]);
-      if (accs.length) { S.accounts=accs; localStorage.setItem('vp3_accounts',JSON.stringify(accs)); }
-      else if (S.accounts.length) { for(const a of S.accounts) await window.FB.saveAccount(a); }
-      if (cfg) { S.config={...S.config,...cfg}; localStorage.setItem('vp3_config',JSON.stringify(S.config)); }
-      else if (S.config) { await window.FB.saveConfigFB(S.config); }
-      flushOfflineQueue();
-      const el = document.getElementById('fbStatus');
-      if (el) el.innerHTML = '<span style="color:#4CAF50">✅ Firebase connecté</span>';
-      console.log('✅ window.FB.init() OK');
-    }
-  };
-
-  fbAuth.signInAnonymously().catch(() => {});
-  console.log('✅ window.FB prêt');
-})();
-</script>
-}
-
 let clockInterval = null;
 
 const compData = [
@@ -1698,51 +1546,6 @@ function handleLogin() {
 
 
 function loginSuccess() {
-  // ─── Démarrer Firebase si disponible ──────────────────────
-  if(window.FB) {
-    window.FB.init().then(() => {
-      // Listeners temps réel selon le rôle
-      if(S.role === 'agent') {
-        window.FB.listenEntries(S.user.name, entries => {
-          renderEntries(); renderDashActivity();
-        });
-        window.FB.listenMessages(S.user.name, msgs => {
-          localStorage.setItem('vp3_messages', JSON.stringify(msgs));
-          renderMessages();
-        });
-        window.FB.listenArchives(archives => {
-          checkAgentValidationNotif();
-        });
-      } else if(S.role === 'admin') {
-        window.FB.listenAllEntries(entries => {
-          updateAdminStats(); renderAdminLogbook();
-        });
-        window.FB.listenPlanning(planning => {
-          renderPlanning();
-        });
-        window.FB.listenArchives(archives => {
-          renderAdminArchives();
-        });
-        window.FB.listenMessages('admin', msgs => {
-          localStorage.setItem('vp3_messages', JSON.stringify(msgs));
-          renderMessages();
-        });
-      } else if(S.role === 'client') {
-        const site = S.user.site || '';
-        window.FB.listenAllEntries(entries => {
-          renderClientLogbook(); updateClientStats();
-        });
-        window.FB.listenArchives(archives => {
-          renderClientArchives(); renderClientPendingArchives();
-        });
-        window.FB.listenNC(ncs => {
-          renderNCList(); updateClientNCKpi(); updateSiteStatus();
-        });
-      }
-    }).catch(e => console.warn('Firebase init error:', e));
-  }
-  // ──────────────────────────────────────────────────────────
-
   if(S.role === 'agent') {
     document.getElementById('checkinAgent').value = S.user.name;
     showScreen('checkin');
@@ -1956,43 +1759,17 @@ function watchValidationNotif() {
 
 // ===== MESSAGERIE INTERNE =====
 function getMessages() { return JSON.parse(localStorage.getItem('vp3_messages')||'[]'); }
-function saveMessages(msgs) {
-  localStorage.setItem('vp3_messages',JSON.stringify(msgs));
-  // Firebase sync
-  if(window.FB && navigator.onLine) {
-    msgs.filter(m=>m._new).forEach(m=>{
-      delete m._new;
-      window.FB.sendMessage(m).catch(()=>queueOffline('message', m));
-    });
-  }
-}
+function saveMessages(msgs) { localStorage.setItem('vp3_messages',JSON.stringify(msgs)); }
 
 function sendAgentMessage() {
-  const input = document.getElementById('msgInput');
-  const text = (input?.value || '').trim();
-  if (!text) return;
-  const myName = S.user?.first ? S.user.first + ' ' + S.user.last : S.user?.name || 'Agent';
-  const msg = {
-    id: Date.now(),
-    from: 'agent',
-    fromName: myName,
-    to: 'admin',
-    text,
-    date: new Date().toISOString(),
-    sentAt: new Date().toISOString(),
-    read: false
-  };
-  // Envoi direct Firebase — pas de localStorage intermédiaire
-  if (window.FB && navigator.onLine) {
-    window.FB.sendMessage(msg).catch(() => queueOffline('message', msg));
-  } else {
-    queueOffline('message', msg);
-    // Affichage local immédiat
-    const msgs = getMessages();
-    msgs.push(msg);
-    localStorage.setItem('vp3_messages', JSON.stringify(msgs));
-  }
-  if (input) { input.value = ''; input.style.height = 'auto'; }
+  const input=document.getElementById('msgInput');
+  const text=(input?.value||'').trim();
+  if(!text) return;
+  const myName=S.user?.first?S.user.first+' '+S.user.last:S.user?.name||'Agent';
+  const msgs=getMessages();
+  msgs.push({id:Date.now(),from:'agent',fromName:myName,to:'admin',text,date:new Date().toISOString(),read:false});
+  saveMessages(msgs);
+  if(input){input.value='';input.style.height='auto';}
   renderMsgThread();
   showToast('💬 Message envoyé au responsable');
 }
@@ -2094,50 +1871,31 @@ function openAdminMessaging() {
 }
 
 function adminSendMsg() {
-  const inp = document.getElementById('adminMsgInput');
-  const text = (inp?.value || '').trim();
-  if (!text) return;
-  const adminName = S.user?.first ? S.user.first + ' ' + S.user.last : S.user?.name || 'Responsable';
-
-  const msg = {
-    id: Date.now(),
-    from: 'admin',
-    fromName: adminName,
-    to: 'agent',
-    text,
-    date: new Date().toISOString(),
-    sentAt: new Date().toISOString(),
-    read: false
-  };
-
-  // Envoi direct Firebase
-  if (window.FB && navigator.onLine) {
-    window.FB.sendMessage(msg).catch(() => queueOffline('message', msg));
-  } else {
-    queueOffline('message', msg);
-    const msgs = getMessages();
-    msgs.push(msg);
-    localStorage.setItem('vp3_messages', JSON.stringify(msgs));
-  }
-
-  if (inp) inp.value = '';
-
-  // Refresh thread admin
-  const thread = document.getElementById('adminMsgThread');
-  if (thread) {
-    const allM = getMessages();
-    allM.push(msg); // Affichage immédiat avant sync Firebase
-    thread.innerHTML = allM.map(m => {
-      const isMine = m.from === 'admin';
-      const d = new Date(m.date);
-      const time = d.toLocaleString('fr-FR', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
+  const inp=document.getElementById('adminMsgInput');
+  const text=(inp?.value||'').trim();
+  if(!text) return;
+  const adminName=S.user?.first?S.user.first+' '+S.user.last:S.user?.name||'Responsable';
+  // Trouver agent en poste
+  const agentOnDuty=S.session?.agentName||S.accounts.find(a=>a.role==='agent'&&a.active)?.first+' '+(S.accounts.find(a=>a.role==='agent'&&a.active)?.last||'')||'Agent';
+  const msgs=getMessages();
+  msgs.push({id:Date.now(),from:'admin',fromName:adminName,to:'agent',toName:agentOnDuty,text,date:new Date().toISOString(),read:false});
+  saveMessages(msgs);
+  if(inp){inp.value='';}
+  // Refresh thread
+  const thread=document.getElementById('adminMsgThread');
+  if(thread){
+    const allM=getMessages();
+    thread.innerHTML=allM.map(m=>{
+      const isMine=m.from==='admin';
+      const d=new Date(m.date);
+      const time=d.toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
       return `<div style="display:flex;justify-content:${isMine?'flex-end':'flex-start'};margin-bottom:10px">
         <div style="max-width:80%;background:${isMine?'linear-gradient(135deg,var(--blue),var(--blue2))':'var(--bg3)'};border-radius:16px;padding:10px 14px">
           <div style="font-size:13px;color:#fff">${esc(m.text)}</div>
           <div style="font-size:9px;color:rgba(255,255,255,.4);margin-top:4px;text-align:right">${isMine?'Vous':'👮 '+esc(m.fromName)} · ${time}</div>
         </div></div>`;
     }).join('');
-    setTimeout(() => thread.scrollTop = thread.scrollHeight, 50);
+    setTimeout(()=>thread.scrollTop=thread.scrollHeight,50);
   }
   showToast('💬 Message envoyé à l\'agent');
 }
@@ -2473,15 +2231,11 @@ function saveVacation() {
     const debut=document.getElementById('vacDebut')?.value||'08:00';
     const fin=document.getElementById('vacFin')?.value||'20:00';
     if(!site){ showToast('⚠ Sélectionnez un site',true); return; }
-    const v={id:String(Date.now()),agent,site,date,debut,fin,status:'confirme',type:'vacation'};
-    S.planning.push(v);
-    if(window.FB && navigator.onLine) window.FB.savePlanning(v).catch(console.error);
+    S.planning.push({id:Date.now(),agent,site,date,debut,fin,status:'confirme',type:'vacation'});
   } else {
     const motif=document.getElementById('vacMotif')?.value||type;
     const dateFin=document.getElementById('vacDateFin')?.value||date;
-    const v={id:String(Date.now()),agent,site:'',date,dateFin,motif,status:type,type};
-    S.planning.push(v);
-    if(window.FB && navigator.onLine) window.FB.savePlanning(v).catch(console.error);
+    S.planning.push({id:Date.now(),agent,site:'',date,dateFin,motif,status:type,type});
   }
   localStorage.setItem('vp3_planning',JSON.stringify(S.planning));
   document.getElementById('vacModal').remove();
@@ -2565,98 +2319,45 @@ function renderInvoice() {
   }).join('');
 }
 
-function generateInvoice() {
-  const val = document.getElementById('invoiceMonth')?.value||'';
-  if(!val){ showToast('⚠ Sélectionnez une période', true); return; }
-  const [year,month] = val.split('-').map(Number);
+async function generateInvoice() {
+  const [year,month] = (document.getElementById('invoiceMonth')?.value||'').split('-').map(Number);
   const siteFilter = document.getElementById('invoiceSite')?.value||'';
   const months=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
-
   let archives = S.archives.filter(a=>{
     const d=new Date(a.date);
-    return d.getMonth()===month && d.getFullYear()===year && (!siteFilter||a.site===siteFilter);
+    return d.getMonth()===month&&d.getFullYear()===year&&(!siteFilter||a.site===siteFilter);
   });
-  if(!archives.length){ showToast('⚠ Aucune vacation sur cette période', true); return; }
-
-  const TAUX_HT = 15;
-  let totalMin = 0;
-  archives.forEach(a=>{
-    if(!a.heureDebut||!a.heureFin) return;
-    const[dh,dm]=a.heureDebut.split(':').map(Number);
-    const[fh,fm]=a.heureFin.split(':').map(Number);
-    const dur = (fh*60+fm)-(dh*60+dm);
-    if(dur>0) totalMin+=dur;
-  });
-  const totalH   = totalMin/60;
-  const totalHT  = totalH*TAUX_HT;
-  const tva      = totalHT*0.20;
-  const totalTTC = totalHT+tva;
-  const invoiceNo= `VP-${year}${String(month+1).padStart(2,'0')}-${String(Math.floor(Math.random()*900)+100)}`;
-  const today    = new Date().toLocaleDateString('fr-FR');
-
-  // Lignes détail par site
-  const bySite = {};
-  archives.forEach(a=>{
-    const s=a.site||'—';
-    if(!bySite[s]) bySite[s]={count:0,min:0};
-    bySite[s].count++;
-    if(a.heureDebut&&a.heureFin){
-      const[dh,dm]=a.heureDebut.split(':').map(Number);
-      const[fh,fm]=a.heureFin.split(':').map(Number);
-      const dur=(fh*60+fm)-(dh*60+dm);
-      if(dur>0) bySite[s].min+=dur;
-    }
-  });
-  const lignes = Object.entries(bySite).map(([site,v])=>{
-    const h=(v.min/60).toFixed(1);
-    return `    ${site.padEnd(28)} ${String(v.count).padStart(3)} vac.   ${h}h   ${(v.min/60*TAUX_HT).toFixed(2)}€`;
-  }).join('\n');
-
-  const facture = `
-╔══════════════════════════════════════════════════╗
-║              FACTURE DE PRESTATION               ║
-║           SÉCURITÉ PRIVÉE — VIGILOPRO            ║
-╚══════════════════════════════════════════════════╝
-
-  N° Facture : ${invoiceNo}
-  Date       : ${today}
-  Période    : ${months[month]} ${year}
-  ${siteFilter ? `Site       : ${siteFilter}` : 'Périmètre  : Tous sites'}
-
-──────────────────────────────────────────────────
-  DÉTAIL DES PRESTATIONS
-──────────────────────────────────────────────────
-  Site                           Vac.   Heures   Montant HT
-${lignes}
-
-──────────────────────────────────────────────────
-  TOTAL VACATIONS : ${archives.length}
-  TOTAL HEURES    : ${totalH.toFixed(1)}h
-  Taux horaire    : ${TAUX_HT.toFixed(2)} € HT/h
-──────────────────────────────────────────────────
-  Sous-total HT   : ${totalHT.toFixed(2)} €
-  TVA 20%         : ${tva.toFixed(2)} €
-  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  TOTAL TTC       : ${totalTTC.toFixed(2)} €
-──────────────────────────────────────────────────
-
-  Paiement sous 30 jours — Virement bancaire
-  SIRET : 000 000 000 00000 (à compléter)
-  TVA Intracom : FR00 000000000 (à compléter)
-
-  Toute facture impayée après échéance entraîne
-  l'application de pénalités de retard (taux légal).
-`.trim();
-
-  const modal=document.createElement('div');
-  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
-  modal.innerHTML=`<div style="background:#111;border:1px solid var(--gold);border-radius:20px;padding:24px;width:100%;max-width:420px;max-height:85vh;overflow-y:auto">
-    <div style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;color:var(--gold);text-align:center;margin-bottom:14px">💰 Facture ${months[month]} ${year}</div>
-    <div style="font-size:11px;color:var(--text2);line-height:1.6;background:var(--bg3);border-radius:10px;padding:14px;white-space:pre;font-family:'Share Tech Mono',monospace;overflow-x:auto;margin-bottom:14px">${esc(facture)}</div>
-    <button onclick="navigator.clipboard?.writeText(this.closest('[style]').querySelector('div > div').textContent).then(()=>showToast('📋 Copié'))" style="width:100%;background:var(--gold-dim);border:1px solid var(--gold);border-radius:10px;padding:11px;font-family:'Cormorant Garamond',serif;font-size:14px;font-weight:700;color:var(--gold);cursor:pointer;margin-bottom:8px">📋 Copier pour comptable</button>
-    <button onclick="this.closest('div[style*=fixed]').remove()" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:11px;font-family:'Cormorant Garamond',serif;font-size:13px;color:var(--text3);cursor:pointer">Fermer</button>
-  </div>`;
-  document.body.appendChild(modal);
+  const totalH = archives.reduce((s,a)=>{
+    if(!a.heureDebut||!a.heureFin) return s;
+    const[dh,dm]=a.heureDebut.split(':').map(Number);const[fh,fm]=a.heureFin.split(':').map(Number);
+    return s+(fh*60+fm-dh*60-dm)/60;
+  },0);
+  showToast('🤖 Génération facture IA...');
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:800,messages:[{role:'user',content:`Rédige une facture professionnelle simple pour prestation de sécurité privée.
+Période : ${months[month]} ${year}
+Prestataire : VigiloPro Sécurité
+Client / Site : ${siteFilter||'Tous sites'}
+Nombre de vacations : ${archives.length}
+Total heures : ${totalH.toFixed(1)}h
+Taux horaire : 15€ HT
+Total HT : ${(totalH*15).toFixed(2)}€
+TVA 20% : ${(totalH*15*0.2).toFixed(2)}€
+Total TTC : ${(totalH*15*1.2).toFixed(2)}€
+Format texte simple, professionnel, mentions légales basiques.`}]})});
+    const data = await resp.json();
+    const text = data.content?.[0]?.text||'';
+    const modal=document.createElement('div');
+    modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+    modal.innerHTML=`<div style="background:#111;border:1px solid var(--gold);border-radius:20px;padding:24px;width:100%;max-width:390px;max-height:80vh;overflow-y:auto">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;color:var(--gold);text-align:center;margin-bottom:14px">💰 Facture ${months[month]} ${year}</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.7;background:var(--bg3);border-radius:10px;padding:14px;white-space:pre-wrap;margin-bottom:14px">${esc(text)}</div>
+      <button onclick="navigator.clipboard?.writeText(${JSON.stringify(text)}).then(()=>showToast('📋 Copié'))" style="width:100%;background:var(--gold-dim);border:1px solid var(--gold);border-radius:10px;padding:11px;font-family:'Cormorant Garamond',serif;font-size:14px;font-weight:700;color:var(--gold);cursor:pointer;margin-bottom:8px">📋 Copier</button>
+      <button onclick="this.closest('div[style]').remove()" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:11px;font-family:'Cormorant Garamond',serif;font-size:13px;color:var(--text3);cursor:pointer">Fermer</button>
+    </div>`;
+    document.body.appendChild(modal);
+  } catch(e){ showToast('⚠ Erreur IA',true); }
 }
 
 
@@ -2664,155 +2365,13 @@ ${lignes}
 // ===== CLIENT TABS =====
 
 // ===== AI =====
-// ===== ÉCOUTE IA VOCALE — FONCTIONNELLE =====
-let aiSpeechRecognition = null;
-let aiListening = false;
-let aiTranscriptFull = '';
-
 function toggleAI() {
-  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-    showToast('⚠ Micro non supporté — utilise Chrome ou Edge', true);
-    return;
-  }
-
-  if (aiListening) {
-    // Arrêter l'écoute
-    aiSpeechRecognition?.stop();
-    aiListening = false;
-    const btn = document.getElementById('aiBtnEl');
-    if (btn) { btn.className = 'ai-btn ai-on'; }
-    document.getElementById('aiBtnIcon').textContent = '🎤';
-    document.getElementById('aiBtnText').textContent = 'Activer Écoute IA';
-    // Si transcript, analyser avec IA
-    if (aiTranscriptFull.trim()) {
-      analyzeVoiceWithAI(aiTranscriptFull.trim());
-    }
-    return;
-  }
-
-  // Démarrer l'écoute
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  aiSpeechRecognition = new SR();
-  aiSpeechRecognition.lang = 'fr-FR';
-  aiSpeechRecognition.continuous = true;
-  aiSpeechRecognition.interimResults = false; // Pas d'intermédiaires = pas de répétitions
-  aiTranscriptFull = '';
-  let lastResultIndex = 0; // Tracker pour ne pas recapturer les anciens résultats
-
-  aiSpeechRecognition.onstart = () => {
-    aiListening = true;
-    lastResultIndex = 0;
-    const btn = document.getElementById('aiBtnEl');
-    if (btn) { btn.className = 'ai-btn ai-off'; }
-    document.getElementById('aiBtnIcon').textContent = '⏹';
-    document.getElementById('aiBtnText').textContent = 'Arrêter & Analyser';
-    showToast('🎤 Parlez — décrivez l\'incident…');
-  };
-
-  aiSpeechRecognition.onresult = (e) => {
-    // Prendre uniquement les nouveaux résultats finaux
-    for (let i = e.resultIndex; i < e.results.length; i++) {
-      if (e.results[i].isFinal) {
-        const newText = e.results[i][0].transcript.trim();
-        // Anti-doublon : ne pas ajouter si déjà présent dans le transcript
-        if (newText && !aiTranscriptFull.toLowerCase().includes(newText.toLowerCase())) {
-          aiTranscriptFull += newText + ' ';
-        }
-      }
-    }
-  };
-
-  aiSpeechRecognition.onerror = (e) => {
-    if (e.error === 'no-speech') return; // Silence normal, ignorer
-    aiListening = false;
-    showToast('⚠ Erreur micro: ' + e.error, true);
-  };
-
-  aiSpeechRecognition.onend = () => {
-    // PAS de redémarrage auto — évite les doublons sur Android
-    // L'agent parle puis appuie sur "Arrêter & Analyser"
-    if (aiListening && !aiTranscriptFull.trim()) {
-      // Seulement si rien capté, redémarrer une seule fois
-      try { aiSpeechRecognition.start(); } catch(e) { aiListening = false; }
-    } else {
-      aiListening = false;
-    }
-  };
-
-  aiSpeechRecognition.start();
-}
-
-async function analyzeVoiceWithAI(transcript) {
-  showToast('🤖 Analyse en cours…');
-
-  // ── Analyse locale par mots-clés (fonctionne sans API) ──
-  const t = transcript.toLowerCase();
-
-  // Détection catégorie
-  let cat = 'Autre', sev = 'normal';
-  const rules = [
-    { keys:['incendie','feu','fumée','flamme','brûle'], cat:'Alarme', sev:'critique' },
-    { keys:['alarme','sirène','déclenchement','intrusion'], cat:'Alarme', sev:'urgent' },
-    { keys:['malaise','blessé','accident','urgence médicale','secours','évanoui','inconscient'], cat:'Intervention', sev:'urgent' },
-    { keys:['agression','violence','bagarre','menace','armé'], cat:'Incident', sev:'critique' },
-    { keys:['intervention','sécuriser','interpeller','individu'], cat:'Intervention', sev:'urgent' },
-    { keys:['porte','accès','badge','vigik','coupe-feu','fermée','ouverte','bloquée'], cat:'Accès', sev:'normal' },
-    { keys:['panne','fuite','eau','électrique','ascenseur','climatisation','technique','coupure'], cat:'Technique', sev:'normal' },
-    { keys:['visiteur','livraison','prestataire','intervenant','technicien'], cat:'Visiteur', sev:'info' },
-    { keys:['ronde','pointage','tour','zone'], cat:'Ronde', sev:'normal' },
-    { keys:['dégradation','tag','vandalisme','cassé','brisé'], cat:'Incident', sev:'urgent' },
-  ];
-  for (const r of rules) {
-    if (r.keys.some(k => t.includes(k))) { cat = r.cat; sev = r.sev; break; }
-  }
-
-  // Détection lieu
-  const lieuPatterns = [
-    /(?:au?|en|dans|niveau|zone|hall|parking|entrée|escalier|couloir|bureau|étage)\s+([a-z0-9\s-]{2,25})/i,
-    /(?:porte|local|salle)\s+([a-z0-9\s-]{1,20})/i,
-  ];
-  let lieu = S.session?.site || '—';
-  for (const p of lieuPatterns) {
-    const m = transcript.match(p);
-    if (m) { lieu = m[0].trim(); break; }
-  }
-
-  // Reformulation professionnelle
-  const reformulations = {
-    'Alarme':       `Déclenchement signalé — ${transcript}.`,
-    'Incident':     `Incident constaté — ${transcript}.`,
-    'Intervention': `Intervention requise — ${transcript}.`,
-    'Accès':        `Anomalie d'accès signalée — ${transcript}.`,
-    'Technique':    `Défaut technique constaté — ${transcript}.`,
-    'Visiteur':     `Passage enregistré — ${transcript}.`,
-    'Ronde':        `Compte-rendu de ronde — ${transcript}.`,
-    'Autre':        transcript,
-  };
-  const desc = reformulations[cat] || transcript;
-
-  const parsed = { cat, sev, lieu, desc };
-
-  const modal = document.createElement('div');
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
-  const sevColors = {info:'var(--text3)',normal:'var(--green)',urgent:'var(--gold)',critique:'var(--red)'};
-  modal.innerHTML = `
-    <div style="background:#111;border:1px solid var(--gold);border-radius:20px;padding:24px;width:100%;max-width:390px">
-      <div style="font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:700;color:var(--gold);text-align:center;margin-bottom:14px">🤖 Analyse Vocale</div>
-      <div style="font-size:11px;color:var(--text4);margin-bottom:8px">Transcription :</div>
-      <div style="font-size:12px;color:var(--text2);background:var(--bg3);border-radius:8px;padding:10px;margin-bottom:14px;line-height:1.5;font-style:italic">"${esc(transcript)}"</div>
-      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
-        <span style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:4px 10px;font-size:11px;color:#fff">${parsed.cat}</span>
-        <span style="background:var(--bg3);border:1px solid ${sevColors[parsed.sev]};border-radius:6px;padding:4px 10px;font-size:11px;color:${sevColors[parsed.sev]}">${parsed.sev.toUpperCase()}</span>
-        <span style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:4px 10px;font-size:11px;color:var(--text3)">📍 ${esc(parsed.lieu)}</span>
-      </div>
-      <div style="font-size:13px;color:var(--text2);line-height:1.5;background:var(--bg4);border-radius:8px;padding:10px;margin-bottom:14px">${esc(parsed.desc)}</div>
-      <button onclick="addEntry('${parsed.cat}','${parsed.sev}',\`${parsed.desc.replace(/`/g,"'")}\`,'${parsed.lieu.replace(/'/g,"\\'")}');this.closest('div[style*=fixed]').remove();showToast('✅ Ajouté à la main courante')" 
-        style="width:100%;background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;border-radius:10px;padding:13px;font-family:'Cormorant Garamond',serif;font-size:14px;font-weight:700;color:#000;cursor:pointer;margin-bottom:8px">
-        ✅ Ajouter à la Main Courante
-      </button>
-      <button onclick="this.closest('div[style*=fixed]').remove()" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:11px;font-family:'Cormorant Garamond',serif;font-size:13px;color:var(--text3);cursor:pointer">Annuler</button>
-    </div>`;
-  document.body.appendChild(modal);
+  S.aiActive = !S.aiActive;
+  const btn=document.getElementById('aiBtnEl');
+  btn.className = S.aiActive ? 'ai-btn ai-off' : 'ai-btn ai-on';
+  document.getElementById('aiBtnIcon').textContent = S.aiActive ? '🔇' : '🎤';
+  document.getElementById('aiBtnText').textContent = S.aiActive ? 'Arrêter Écoute' : 'Activer Écoute IA';
+  showToast(S.aiActive ? '🎤 IA en écoute...' : '✓ Écoute IA arrêtée');
 }
 
 // ===== PATROL =====
@@ -3163,30 +2722,14 @@ function sigEnd(){ sigDrawing=false; }
 function clearSignature(){ sigCtx.clearRect(0,0,sigCanvas.width,sigCanvas.height); }
 function closeSignatureModal(){ document.getElementById('signatureModal').style.display='none'; S.pendingArchiveForSign=null; }
 
-// ─── Sauvegarde archive centralisée (local + Firebase) ───────────────────
-function saveArchiveFull(archive) {
-  // S'assurer d'une ID string stable
-  if(!archive.id) archive.id = String(Date.now());
-  // Dédoublonner en local
-  const idx = S.archives.findIndex(a=>String(a.id)===String(archive.id));
-  if(idx === -1) S.archives.unshift(archive);
-  else S.archives[idx] = archive;
-  localStorage.setItem('vp3_archives', JSON.stringify(S.archives));
-  // Firebase
-  if(window.FB && navigator.onLine) {
-    window.FB.saveArchive(archive).catch(()=>queueOffline('archive', archive));
-  } else {
-    queueOffline('archive', archive);
-  }
-}
-
 function confirmSignature() {
   S.signatureData = sigCanvas.toDataURL();
   document.getElementById('signatureModal').style.display='none';
   const archive = S.pendingArchiveForSign;
   if(!archive) return;
   archive.signature = S.signatureData;
-  saveArchiveFull(archive);
+  S.archives.unshift(archive);
+  localStorage.setItem('vp3_archives', JSON.stringify(S.archives));
   S.pendingArchiveForSign = null;
   exportPDF(archive);
   showEndShiftModal(archive);
@@ -3226,56 +2769,17 @@ function addEntry(cat,sev,desc,lieu='—',ref='') {
   const now=new Date();
   const e={id:Date.now(),date:now.toISOString().split('T')[0],time:now.toTimeString().slice(0,5),cat,sev,desc,agent:S.user?.name||'Agent',lieu,ref,site:S.session?.site||'Général'};
   S.entries.unshift(e);
-  // Firebase — avec fallback offline
-  if(window.FB && navigator.onLine) {
-    window.FB.addEntry(e).catch(()=>{ queueOffline('entry', e); });
-  } else {
-    queueOffline('entry', e);
-    localStorage.setItem('vp3_entries', JSON.stringify(S.entries));
-  }
-
-  // ─── Auto-création NC pour le client si entrée urgente/critique ───────
-  // Catégories qui créent une NC visible chez le client
-  const NC_CATS = ['Alarme','Incendie','Intervention','Technique','Anomalie','Intrusion','Dégradation'];
-  const shouldCreateNC = (sev==='urgent'||sev==='critique') &&
-    (NC_CATS.some(c=>cat.toLowerCase().includes(c.toLowerCase())) || sev==='critique');
-  if(shouldCreateNC && !desc.startsWith('[NC]')) {
-    const nc = {
-      id: String(Date.now()+1),
-      cat: sev==='critique' ? 'incendie' : 'technique',
-      catLabel: sev==='critique' ? '🔥 Sécurité Incendie' : '🔧 Technique',
-      item: { label: cat, delai: sev==='critique'?1:4, compensatoire:'Vérification immédiate', reglementaire:false },
-      lieu: lieu!='—' ? lieu : (S.session?.site||'—'),
-      desc: desc,
-      date: e.date,
-      time: e.time,
-      echeance: new Date(now.getTime()+(sev==='critique'?3600000:14400000)).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}),
-      status: 'open',
-      source: 'agent',
-      agentName: S.user?.name||'Agent',
-      site: S.session?.site||'—',
-      history: [{ date: now.toLocaleString('fr-FR'), action:`Signalé par l'agent — ${cat}`, by: S.user?.name||'Agent' }]
-    };
-    if(!S.nonConformites) S.nonConformites=[];
-    S.nonConformites.unshift(nc);
-    localStorage.setItem('vp3_nc', JSON.stringify(S.nonConformites));
-    if(window.FB && navigator.onLine) window.FB.saveNC(nc).catch(console.error);
-  }
-  // ──────────────────────────────────────────────────────────────────────
-
+  saveEntries();
   renderEntries();
   renderDashActivity();
   updateAdminStats();
   updateClientStats();
 }
 
-function saveEntries(){
-  localStorage.setItem('vp3_entries',JSON.stringify(S.entries));
-}
+function saveEntries(){localStorage.setItem('vp3_entries',JSON.stringify(S.entries));}
 
 function deleteEntry(id){
   S.entries=S.entries.filter(e=>e.id!==id);
-  if(window.FB && navigator.onLine) window.FB.deleteEntry(String(id));
   saveEntries();renderEntries();renderDashActivity();updateAdminStats();
   showToast('🗑 Supprimé');
 }
@@ -3416,20 +2920,15 @@ function selNewRole(r){
   });
 }
 
-function saveAccounts() {
-  localStorage.setItem('vp3_accounts', JSON.stringify(S.accounts));
-}
-
 function createAccount(){
   const f=document.getElementById('newFirst').value.trim();
   const l=document.getElementById('newLast').value.trim();
   const site=document.getElementById('newSite').value.trim();
   const pw=document.getElementById('newPw').value.trim() || PASSWORDS[newRoleSelected];
   if(!f||!l){showToast('⚠ Prénom et Nom requis',true);return;}
-  const acc={id:String(Date.now()),role:newRoleSelected,first:f,last:l,site,active:true,pw};
+  const acc={id:Date.now(),role:newRoleSelected,first:f,last:l,site,active:true,pw};
   S.accounts.push(acc);
-  saveAccounts();
-  if(window.FB && navigator.onLine) window.FB.saveAccount(acc).catch(console.error);
+  localStorage.setItem('vp3_accounts',JSON.stringify(S.accounts));
   document.getElementById('newFirst').value='';
   document.getElementById('newLast').value='';
   document.getElementById('newSite').value='';
@@ -3439,31 +2938,28 @@ function createAccount(){
 }
 
 function toggleAccountActive(id){
-  const acc=S.accounts.find(a=>String(a.id)===String(id));
+  const acc=S.accounts.find(a=>a.id===id);
   if(acc) acc.active=!acc.active;
-  saveAccounts();
-  if(window.FB && navigator.onLine) window.FB.saveAccount(acc).catch(console.error);
+  localStorage.setItem('vp3_accounts',JSON.stringify(S.accounts));
   renderAccountList();
   showToast(acc.active?'✅ Compte activé':'⛔ Compte désactivé');
 }
 
 function deleteAccount(id){
   if(!confirm('Supprimer ce compte ?')) return;
-  S.accounts=S.accounts.filter(a=>String(a.id)!==String(id));
-  saveAccounts();
-  if(window.FB && navigator.onLine) window.FB.deleteAccount(String(id)).catch(console.error);
+  S.accounts=S.accounts.filter(a=>a.id!==id);
+  localStorage.setItem('vp3_accounts',JSON.stringify(S.accounts));
   renderAccountList();
   showToast('🗑 Compte supprimé');
 }
 
 function resetPw(id){
-  const acc=S.accounts.find(a=>String(a.id)===String(id));
+  const acc=S.accounts.find(a=>a.id===id);
   if(!acc) return;
   const newPw=prompt(`Nouveau mot de passe pour ${acc.first} ${acc.last} :`);
   if(!newPw||!newPw.trim()) return;
   acc.pw=newPw.trim();
-  saveAccounts();
-  if(window.FB && navigator.onLine) window.FB.saveAccount(acc).catch(console.error);
+  localStorage.setItem('vp3_accounts',JSON.stringify(S.accounts));
   renderAccountList();
   showToast(`🔑 Mot de passe mis à jour`);
 }
@@ -3636,20 +3132,12 @@ function openClientSignature(archiveId){
 function confirmClientSignature(){
   const sigData=sigCanvas.toDataURL();
   document.getElementById('signatureModal').style.display='none';
-  const archive=S.archives.find(a=>String(a.id)===String(clientSigArchiveId));
+  const archive=S.archives.find(a=>a.id===clientSigArchiveId);
   if(archive){
     archive.clientValidated=true;archive.clientSignature=sigData;
     archive.clientValidatedAt=new Date().toLocaleString('fr-FR');
     archive.clientValidatedBy=S.user?.name||'—';
-    saveArchiveFull(archive);
-    // Mettre à jour uniquement les champs de validation dans Firebase
-    if(window.FB && navigator.onLine) {
-      window.FB.updateArchive(archive.id, {
-        clientValidated: true, clientSignature: sigData,
-        clientValidatedAt: archive.clientValidatedAt,
-        clientValidatedBy: archive.clientValidatedBy
-      }).catch(console.error);
-    }
+    localStorage.setItem('vp3_archives',JSON.stringify(S.archives));
     renderClientArchives();renderClientPendingArchives();
     showToast('✅ Rapport validé et signé !');
   }
@@ -3741,49 +3229,9 @@ function getSiteEmail(siteName) {
 }
 
 function showEndShiftModal(archive) {
-  const entries = archive.entries || S.entries.filter(e => e.date === archive.date);
-  const nbUrgent = entries.filter(e => e.sev === 'urgent' || e.sev === 'critique').length;
-  const summary = entries.slice(0, 15).map(e => `[${e.time}] ${e.cat} (${e.sev}) — ${e.desc.slice(0, 60)}`).join('\n');
-
-  // ── 1. Message Admin (messagerie interne) ──
-  const adminMsg = {
-    id: Date.now(),
-    from: 'agent',
-    fromName: archive.agent,
-    to: 'admin',
-    date: new Date().toISOString(),
-    sentAt: new Date().toISOString(),
-    read: false,
-    type: 'fin_service',
-    text: `📋 FIN DE SERVICE — ${archive.agent}\n🏢 ${archive.site} | ${archive.date} | ${archive.heureDebut}→${archive.heureFin}\n📊 ${entries.length} événements (${nbUrgent} urgents)\n\n${summary}${entries.length > 15 ? `\n... et ${entries.length - 15} autres` : ''}`
-  };
-  if (window.FB && navigator.onLine) {
-    window.FB.sendMessage(adminMsg).catch(console.error);
-  }
-
-  // ── 2. NC de fin de service pour le Client (visible dans son onglet Signalements) ──
-  const clientNC = {
-    id: Date.now() + 1,
-    date: archive.date,
-    time: archive.heureFin,
-    agent: archive.agent,
-    site: archive.site,
-    type: 'Fin de service',
-    cat: 'Rapport vacation',
-    sev: nbUrgent > 0 ? 'urgent' : 'normal',
-    desc: `Vacation ${archive.heureDebut}→${archive.heureFin} — ${entries.length} événements (${nbUrgent} urgents)`,
-    status: 'En attente de validation',
-    source: 'fin_service',
-    entries: entries,
-    createdAt: new Date().toISOString()
-  };
-  if (window.FB && navigator.onLine) {
-    window.FB.saveNC(clientNC).catch(console.error);
-  }
-
   const modal = document.createElement('div');
   modal.id = 'endShiftModal';
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
   modal.innerHTML = `
     <div style="background:#111;border:1px solid var(--gold);border-radius:20px;padding:28px 24px;width:100%;max-width:390px">
       <div style="text-align:center;margin-bottom:22px">
@@ -3793,7 +3241,7 @@ function showEndShiftModal(archive) {
       </div>
 
       <div style="background:var(--bg3);border-radius:12px;padding:16px;margin-bottom:16px">
-        <div style="font-size:11px;color:var(--text4);font-family:'Share Tech Mono',monospace;margin-bottom:10px">RÉCAPITULATIF</div>
+        <div style="font-size:11px;color:var(--text4);font-family:'Share Tech Mono',monospace;margin-bottom:10px;letter-spacing:0.1px">RÉCAPITULATIF VACATION</div>
         <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)">
           <span style="font-size:13px;color:var(--text3)">👮 Agent</span>
           <span style="font-size:13px;color:#fff;font-weight:600">${esc(archive.agent)}</span>
@@ -3802,42 +3250,36 @@ function showEndShiftModal(archive) {
           <span style="font-size:13px;color:var(--text3)">🏢 Site</span>
           <span style="font-size:13px;color:#fff;font-weight:600">${esc(archive.site)}</span>
         </div>
-        <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)">
-          <span style="font-size:13px;color:var(--text3)">📋 Événements</span>
-          <span style="font-size:13px;color:var(--gold);font-weight:700">${entries.length}</span>
-        </div>
         <div style="display:flex;justify-content:space-between;padding:7px 0">
-          <span style="font-size:13px;color:var(--text3)">⚡ Urgents</span>
-          <span style="font-size:13px;color:${nbUrgent>0?'var(--red)':'var(--green)'};font-weight:700">${nbUrgent}</span>
+          <span style="font-size:13px;color:var(--text3)">📋 Événements</span>
+          <span style="font-size:13px;color:var(--gold);font-weight:700">${archive.nbEntries}</span>
         </div>
       </div>
 
       <div style="background:var(--bg3);border-radius:12px;padding:16px;margin-bottom:20px">
-        <div style="font-size:11px;color:var(--text4);font-family:'Share Tech Mono',monospace;margin-bottom:10px">TRANSMISSIONS AUTOMATIQUES</div>
+        <div style="font-size:11px;color:var(--text4);font-family:'Share Tech Mono',monospace;margin-bottom:10px;letter-spacing:0.1px">NOTIFICATIONS ENVOYÉES</div>
         <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
-          <span style="font-size:22px">✅</span>
-          <div>
-            <div style="font-size:12px;color:var(--green);font-weight:600">Main courante → Employeur</div>
-            <div style="font-size:11px;color:var(--text4)">Visible en temps réel dans son interface</div>
+          <span style="font-size:16px">⚙️</span>
+          <div style="flex:1">
+            <div style="font-size:12px;color:var(--text2);font-weight:600">Employeur</div>
+            <div style="font-size:11px;color:var(--text4);font-family:'Share Tech Mono',monospace">${esc(archive.emailEmployeur)}</div>
           </div>
-        </div>
-        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
-          <span style="font-size:22px">✅</span>
-          <div>
-            <div style="font-size:12px;color:var(--green);font-weight:600">Archives → Client</div>
-            <div style="font-size:11px;color:var(--text4)">En attente de validation client</div>
-          </div>
+          <span style="font-size:18px">📨</span>
         </div>
         <div style="display:flex;align-items:center;gap:10px;padding:8px 0">
-          <span style="font-size:22px">📄</span>
-          <div>
-            <div style="font-size:12px;color:var(--blue);font-weight:600">PDF généré</div>
-            <div style="font-size:11px;color:var(--text4)">Rapport de fin de service</div>
+          <span style="font-size:16px">🏢</span>
+          <div style="flex:1">
+            <div style="font-size:12px;color:var(--text2);font-weight:600">Client — ${esc(archive.site)}</div>
+            <div style="font-size:11px;color:var(--text4);font-family:'Share Tech Mono',monospace">${esc(archive.emailClient)}</div>
           </div>
+          <span style="font-size:18px">📨</span>
+        </div>
+        <div style="margin-top:10px;padding:8px;background:var(--green-dim);border:1px solid var(--green);border-radius:8px;text-align:center">
+          <span style="font-size:11px;color:var(--green)">✅ Main courante disponible dans l'interface Admin & Client</span>
         </div>
       </div>
 
-      <button onclick="closeEndShiftModal()" style="width:100%;padding:14px;background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;border-radius:12px;font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:700;color:#000;cursor:pointer">
+      <button onclick="closeEndShiftModal()" style="width:100%;padding:14px;background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;border-radius:12px;font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:700;color:#000;cursor:pointer;letter-spacing:0.1px">
         🏠 RETOUR ACCUEIL
       </button>
     </div>`;
@@ -4001,24 +3443,25 @@ function exportPDF(archive){
 
   const fname = archive ? `vigilopro_${dateStr}_${agent.replace(/ /g,'_')}.pdf` : `vigilopro_${dateStr}.pdf`;
 
-  // Téléchargement direct sans ouvrir de fenêtre navigateur
+  // Blob URL — seule méthode fiable dans Chrome (data URI = page vide, CSP bloque iframe)
   const pdfBlob = doc.output('blob');
   const blobUrl = URL.createObjectURL(pdfBlob);
-  const a = document.createElement('a');
-  a.href = blobUrl;
-  a.download = fname;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
-  showToast('📄 PDF sauvegardé dans vos téléchargements');
+  const win = window.open(blobUrl, '_blank');
+  if(!win) {
+    // Popup bloquée — fallback lien téléchargement direct
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = fname;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
+    showToast('📄 PDF téléchargé — vérifiez vos téléchargements');
+  }
 }
 
 // ===== SITES & CONFIG =====
-function saveConfig(){
-  localStorage.setItem('vp3_config', JSON.stringify(S.config));
-  if(window.FB && navigator.onLine) window.FB.saveConfigFB(S.config).catch(console.error);
-}
+function saveConfig(){ localStorage.setItem('vp3_config', JSON.stringify(S.config)); }
 
 function saveEmailEmployeur() {
   const v = document.getElementById('cfgEmailEmployeur').value.trim();
@@ -4255,15 +3698,12 @@ function openAnnotation(archiveId) {
 }
 
 function saveAnnotation(archiveId) {
-  const archive = S.archives.find(a=>String(a.id)===String(archiveId));
+  const archive = S.archives.find(a=>a.id===archiveId);
   if(!archive) return;
   const txt = document.getElementById('annotationText').value.trim();
   archive.clientAnnotation = txt;
   archive.clientAnnotatedAt = new Date().toLocaleString('fr-FR');
-  saveArchiveFull(archive);
-  if(window.FB && navigator.onLine) {
-    window.FB.updateArchive(archive.id, {clientAnnotation: txt, clientAnnotatedAt: archive.clientAnnotatedAt}).catch(console.error);
-  }
+  localStorage.setItem('vp3_archives', JSON.stringify(S.archives));
   document.getElementById('annotationModal')?.remove();
   renderClientArchives();
   showToast('💬 Annotation sauvegardée');
@@ -4551,7 +3991,7 @@ function submitNC() {
   const now = new Date();
   const echeance = new Date(now.getTime() + selectedNCItem.delai*3600000);
   const nc = {
-    id: String(Date.now()),
+    id: Date.now(),
     cat: selectedNCCat,
     catLabel: NC_CATALOGUE[selectedNCCat].label,
     item: selectedNCItem,
@@ -4564,7 +4004,6 @@ function submitNC() {
   };
   S.nonConformites.unshift(nc);
   localStorage.setItem('vp3_nc', JSON.stringify(S.nonConformites));
-  if(window.FB && navigator.onLine) window.FB.saveNC(nc).catch(console.error);
   document.getElementById('ncModal').remove();
   // Injecter dans main courante agent
   const sevNC = (selectedNCCat==='incendie'||selectedNCItem.delai<=2)?'critique':'urgent';
@@ -4622,14 +4061,13 @@ function renderNCList() {
 }
 
 function advanceNC(id) {
-  const nc = S.nonConformites.find(n=>String(n.id)===String(id));
+  const nc = S.nonConformites.find(n=>n.id===id);
   if(!nc) return;
   const transitions = { open:'taken', taken:'progress', progress:'closed' };
   const labels = { open:'Prise en charge', taken:'Mise en cours de résolution', progress:'Clôturée — anomalie résolue' };
   nc.status = transitions[nc.status]||'closed';
   nc.history.push({ date:new Date().toLocaleString('fr-FR'), action:labels[transitions[nc.status]||'closed']||labels.progress, by:S.user?.name||'Client' });
   localStorage.setItem('vp3_nc', JSON.stringify(S.nonConformites));
-  if(window.FB && navigator.onLine) window.FB.saveNC(nc).catch(console.error);
   renderNCList(); updateClientNCKpi(); updateSiteStatus();
   if(nc.status==='closed') showToast('✅ Non-conformité clôturée !');
   else showToast('🔄 Statut mis à jour');
@@ -4637,7 +4075,7 @@ function advanceNC(id) {
 
 function deleteNC(id) {
   if(!confirm('Supprimer cette non-conformité ?')) return;
-  S.nonConformites = S.nonConformites.filter(n=>String(n.id)!==String(id));
+  S.nonConformites = S.nonConformites.filter(n=>n.id!==id);
   localStorage.setItem('vp3_nc', JSON.stringify(S.nonConformites));
   renderNCList(); updateClientNCKpi();
 }
@@ -4904,63 +4342,44 @@ function showAgentPresence(agentId) {
   setTimeout(()=>section.scrollIntoView({behavior:'smooth',block:'start'}),100);
 }
 
-function generatePayslip() {
-  const val = document.getElementById('rhMonth')?.value||'';
-  if(!val){ showToast('⚠ Sélectionnez une période', true); return; }
-  const [year,month] = val.split('-').map(Number);
+async function generatePayslip() {
+  const [year,month] = (document.getElementById('rhMonth')?.value||'').split('-').map(Number);
   const agentId = document.getElementById('rhAgent')?.value||'';
-  const months=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  const months  = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
 
   const data = getRHData(year, month, agentId||null);
-  const actifs = data.filter(d=>d.vacations>0);
-  if(!actifs.length){ showToast('⚠ Aucune donnée cette période', true); return; }
+  if(!data.length || data.every(d=>d.vacations===0)) { showToast('⚠ Aucune donnée cette période', true); return; }
 
-  const lignes = actifs.map(d=>{
-    const heuresNorm = Math.min(d.totalH, CONTRAT_HEURES_MOIS);
-    const suppH25 = d.suppH * 1.25;
-    const brutNorm = heuresNorm * TAUX_HORAIRE_AGENT;
-    const brutSupp = suppH25 * TAUX_HORAIRE_AGENT;
-    const prime = d.ponct===100 ? 50 : d.ponct>=95 ? 25 : 0;
-    const total = brutNorm + brutSupp + prime;
-    return `
-┌─────────────────────────────────────────────────┐
-│  ${(d.agent.first+' '+d.agent.last).toUpperCase().padEnd(47)}│
-├─────────────────────────────────────────────────┤
-│  Vacations effectuées  : ${String(d.vacations).padEnd(23)}│
-│  Heures normales       : ${heuresNorm.toFixed(1).padEnd(5)}h × ${TAUX_HORAIRE_AGENT}€    = ${brutNorm.toFixed(2).padStart(8)}€ │
-│  Heures supp. (+25%)   : ${d.suppH.toFixed(1).padEnd(5)}h × ${(TAUX_HORAIRE_AGENT*1.25).toFixed(2)}€ = ${brutSupp.toFixed(2).padStart(8)}€ │
-│  Prime ponctualité     : ${d.ponct}%${' '.repeat(20)}${prime>0?String(prime).padStart(8)+'€':'         —'} │
-│  Retards               : ${String(d.retards).padEnd(23)}│
-├─────────────────────────────────────────────────┤
-│  SALAIRE BRUT ESTIMÉ   :${total.toFixed(2).padStart(20)}€ │
-└─────────────────────────────────────────────────┘`.trim();
-  }).join('\n\n');
+  showToast('🤖 Génération des éléments de paie...');
 
-  const recap = `ÉLÉMENTS DE PAIE — ${months[month].toUpperCase()} ${year}
-${'═'.repeat(51)}
-Généré le ${new Date().toLocaleDateString('fr-FR')} par VigiloPro
-Taux horaire : ${TAUX_HORAIRE_AGENT}€ — Base contractuelle : ${CONTRAT_HEURES_MOIS}h/mois
-${'═'.repeat(51)}
+  const summary = data.filter(d=>d.vacations>0).map(d=>
+    `${d.agent.first} ${d.agent.last} : ${d.totalH.toFixed(1)}h travaillées, ${d.suppH.toFixed(1)}h supp., ${d.retards} retard(s), ponctualité ${d.ponct}%, brut estimé ${d.brut.toFixed(2)}€`
+  ).join('\n');
 
-${lignes}
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:900,messages:[{role:'user',content:`Tu es un gestionnaire RH d'une société de sécurité privée.
+Génère un récapitulatif des éléments de paie pour ${months[month]} ${year}, professionnel et clair.
 
-${'═'.repeat(51)}
-TOTAL BRUT ESTIMÉ : ${actifs.reduce((s,d)=>{
-    const heuresNorm=Math.min(d.totalH,CONTRAT_HEURES_MOIS);
-    const prime=d.ponct===100?50:d.ponct>=95?25:0;
-    return s+(heuresNorm*TAUX_HORAIRE_AGENT)+(d.suppH*1.25*TAUX_HORAIRE_AGENT)+prime;
-  },0).toFixed(2)}€
-À transmettre au service comptabilité.`;
+Données :
+${summary}
 
-  const modal=document.createElement('div');
-  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
-  modal.innerHTML=`<div style="background:#111;border:1px solid var(--blue);border-radius:20px;padding:24px;width:100%;max-width:420px;max-height:85vh;overflow-y:auto">
-    <div style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;color:var(--blue);text-align:center;margin-bottom:14px">🧾 Éléments de paie — ${months[month]} ${year}</div>
-    <div style="font-size:11px;color:var(--text2);line-height:1.6;background:var(--bg3);border-radius:10px;padding:14px;white-space:pre;font-family:'Share Tech Mono',monospace;overflow-x:auto;margin-bottom:14px">${esc(recap)}</div>
-    <button onclick="navigator.clipboard?.writeText(\`${recap.replace(/`/g,"'")}\`).then(()=>showToast('📋 Copié'))" style="width:100%;background:var(--blue-dim);border:1px solid var(--blue);border-radius:10px;padding:11px;font-family:'Cormorant Garamond',serif;font-size:14px;font-weight:700;color:var(--blue);cursor:pointer;margin-bottom:8px">📋 Copier pour le comptable</button>
-    <button onclick="this.closest('div[style*=fixed]').remove()" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:11px;font-family:'Cormorant Garamond',serif;font-size:13px;color:var(--text3);cursor:pointer">Fermer</button>
-  </div>`;
-  document.body.appendChild(modal);
+Taux horaire contractuel : ${TAUX_HORAIRE_AGENT}€ brut/h
+Base contractuelle : ${CONTRAT_HEURES_MOIS}h/mois
+
+Présente pour chaque agent : heures normales, heures supp (majoration 25%), salaire brut de base, prime de ponctualité si applicable, total brut estimé. Format structuré, prêt à transmettre au comptable.`}]})});
+    const data2 = await resp.json();
+    const text = data2.content?.[0]?.text||'';
+    const modal=document.createElement('div');
+    modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+    modal.innerHTML=`<div style="background:#111;border:1px solid var(--blue);border-radius:20px;padding:24px;width:100%;max-width:390px;max-height:80vh;overflow-y:auto">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;color:var(--blue);text-align:center;margin-bottom:14px">🧾 Éléments de paie — ${months[month]} ${year}</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.7;background:var(--bg3);border-radius:10px;padding:14px;white-space:pre-wrap;margin-bottom:14px">${esc(text)}</div>
+      <button onclick="navigator.clipboard?.writeText(${JSON.stringify(text)}).then(()=>showToast('📋 Copié'))" style="width:100%;background:var(--blue-dim);border:1px solid var(--blue);border-radius:10px;padding:11px;font-family:'Cormorant Garamond',serif;font-size:14px;font-weight:700;color:var(--blue);cursor:pointer;margin-bottom:8px">📋 Copier pour le comptable</button>
+      <button onclick="this.closest('div[style]').remove()" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:11px;font-family:'Cormorant Garamond',serif;font-size:13px;color:var(--text3);cursor:pointer">Fermer</button>
+    </div>`;
+    document.body.appendChild(modal);
+  } catch(e){ showToast('⚠ Erreur IA', true); }
 }
 
 // ===== SOS URGENCE =====
@@ -5043,42 +4462,46 @@ let offlineQueue = JSON.parse(localStorage.getItem('vp3_offlineQueue')||'[]');
 
 function isOnline() { return navigator.onLine; }
 
-// Helper universel pour mettre en file d'attente hors-ligne
-function queueOffline(type, data) {
-  offlineQueue.push({ type, data, _ts: Date.now() });
+function saveOfflineEntry(entry) {
+  offlineQueue.push({...entry, _offline:true, _ts:Date.now()});
   localStorage.setItem('vp3_offlineQueue', JSON.stringify(offlineQueue));
   updateOfflineBanner();
-}
-
-function saveOfflineEntry(entry) {
-  queueOffline('entry', entry);
 }
 
 function syncOfflineQueue() {
   if(!offlineQueue.length) return;
   offlineQueue.forEach(e=>{
-    if(e.type === 'entry' && !S.entries.find(x=>x.id===e.data?.id)) S.entries.push(e.data||e);
-    else if(!e.type && !S.entries.find(x=>x.id===e.id)) S.entries.push(e); // legacy
+    if(!S.entries.find(x=>x.id===e.id)) S.entries.push(e);
   });
   offlineQueue=[];
   localStorage.setItem('vp3_offlineQueue','[]');
   saveEntries();
   renderEntries();
   updateOfflineBanner();
-  console.log('📶 Données synchronisées');
+  showToast('📶 '+offlineQueue.length+' événements synchronisés');
 }
 
 function updateOfflineBanner() {
-  // Synchronisation silencieuse — pas de bandeau visible
-  const n = offlineQueue.length;
-  if (isOnline() && n > 0) {
-    // Sync auto silencieuse en arrière-plan
-    setTimeout(syncOfflineQueue, 500);
+  let banner=document.getElementById('offlineBanner');
+  if(!banner){
+    banner=document.createElement('div');
+    banner.id='offlineBanner';
+    banner.style.cssText='position:fixed;top:0;left:0;right:0;z-index:8888;background:var(--orange);padding:8px 16px;display:flex;align-items:center;justify-content:space-between;font-family:\'Cormorant Garamond\',serif;font-size:13px;font-weight:700;color:#000;display:none';
+    document.body.appendChild(banner);
+  }
+  const n=offlineQueue.length;
+  if(!isOnline()||n>0){
+    banner.style.display='flex';
+    banner.innerHTML=!isOnline()?
+      `<span>📵 Mode hors-ligne — ${n} événement${n>1?'s':''} en attente</span><span style="font-size:10px">Auto-sync dès reconnexion</span>`:
+      `<span>📶 Reconnecté — ${n} événement${n>1?'s':''} à synchroniser</span><button onclick="syncOfflineQueue()" style="background:#000;border:none;border-radius:6px;padding:4px 10px;font-size:11px;color:var(--orange);cursor:pointer">Sync</button>`;
+  } else {
+    banner.style.display='none';
   }
 }
 
-window.addEventListener('online',  ()=>{ setTimeout(syncOfflineQueue, 1000); });
-window.addEventListener('offline', ()=>{});
+window.addEventListener('online',  ()=>{ updateOfflineBanner(); setTimeout(syncOfflineQueue,1000); });
+window.addEventListener('offline', ()=>updateOfflineBanner());
 
 // ===== HISTORIQUE NC CLIENT =====
 function renderNCHistory() {
@@ -5284,7 +4707,8 @@ async function biometricEndShift(archive) {
     archive.signature = 'biometric';
     archive.biometricAt = new Date().toLocaleString('fr-FR');
     archive.biometricAgent = S.user?.name;
-    saveArchiveFull(archive);
+    S.archives.unshift(archive);
+    localStorage.setItem('vp3_archives', JSON.stringify(S.archives));
     S.pendingArchiveForSign = null;
     exportPDF(archive);
     showEndShiftModal(archive);
@@ -5326,345 +4750,6 @@ function showBioManualConfirm(name, onConfirm, onCancel) {
   document.body.appendChild(m);
   m.querySelector('#_bioConfirm').onclick = () => { m.remove(); onConfirm && onConfirm(); };
   m.querySelector('#_bioCancel').onclick  = () => { m.remove(); onCancel  && onCancel();  };
-}
-
-// ═══════════════════════════════════════════════════════
-//  RAPPORT D'ANOMALIE — Photo horodatée + géolocalisée
-// ═══════════════════════════════════════════════════════
-function openAnomalieReport() {
-  const modal = document.createElement('div');
-  modal.id = 'anomalieModal';
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.97);z-index:9999;display:flex;flex-direction:column;overflow-y:auto';
-  modal.innerHTML = `
-    <div style="background:linear-gradient(135deg,#B71C1C,#E53935);padding:20px 20px 16px;display:flex;align-items:center;gap:12px">
-      <div style="font-size:24px">📸</div>
-      <div>
-        <div style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;color:#fff">Rapport d'Anomalie</div>
-        <div style="font-size:11px;color:rgba(255,255,255,.7)">Photo + géolocalisation obligatoires</div>
-      </div>
-      <button onclick="document.getElementById('anomalieModal').remove()" style="margin-left:auto;background:none;border:none;color:#fff;font-size:22px;cursor:pointer">✕</button>
-    </div>
-
-    <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
-
-      <!-- Zone photo -->
-      <div id="anomaliePhotoZone" onclick="triggerAnomalieCamera()" 
-        style="background:var(--bg3);border:2px dashed var(--red);border-radius:14px;padding:0;min-height:180px;cursor:pointer;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative">
-        <div id="anomaliePhotoPlaceholder" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:30px">
-          <div style="font-size:48px">📷</div>
-          <div style="font-family:'Cormorant Garamond',serif;font-size:14px;font-weight:700;color:var(--red)">PRENDRE UNE PHOTO</div>
-          <div style="font-size:11px;color:var(--text4)">Obligatoire — horodatée automatiquement</div>
-        </div>
-        <img id="anomaliePhotoPreview" src="" alt="" style="display:none;width:100%;max-height:250px;object-fit:cover">
-        <div id="anomaliePhotoTimestamp" style="display:none;position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,.8);color:var(--gold);font-size:10px;font-family:'Share Tech Mono',monospace;padding:4px 8px;border-radius:6px"></div>
-      </div>
-      <input type="file" id="anomalieFileInput" accept="image/*" capture="environment" style="display:none" onchange="handleAnomaliePhoto(this)">
-
-      <!-- Géolocalisation -->
-      <div id="anomalieGeoZone" style="background:var(--bg3);border:1px solid var(--border2);border-radius:12px;padding:14px;display:flex;align-items:center;gap:12px">
-        <div style="font-size:22px">📍</div>
-        <div style="flex:1">
-          <div style="font-size:11px;color:var(--text4);margin-bottom:3px">GÉOLOCALISATION</div>
-          <div id="anomalieGeoText" style="font-size:12px;color:var(--text3)">En attente de localisation…</div>
-        </div>
-        <button onclick="getAnomalieGeo()" style="background:var(--blue-dim);border:1px solid var(--blue);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--blue);cursor:pointer">🔄</button>
-      </div>
-
-      <!-- Type d'anomalie -->
-      <div>
-        <div style="font-size:11px;color:var(--text4);margin-bottom:8px;font-family:'Share Tech Mono',monospace">TYPE D'ANOMALIE</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-          ${['🔧 Technique','💧 Fuite','🔥 Incendie','💡 Électrique','🚪 Intrusion','🗑 Dégradation','⚠️ Danger','📋 Autre'].map(t=>{
-            const [icon,...words] = t.split(' ');
-            const label = words.join(' ');
-            return `<button onclick="selectAnomalieType(this,'${label}')" class="anomalie-type-btn" 
-              style="background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:10px;display:flex;align-items:center;gap:8px;cursor:pointer">
-              <span style="font-size:18px">${icon}</span>
-              <span style="font-size:12px;color:#fff;font-family:'Cormorant Garamond',serif;font-weight:600">${label}</span>
-            </button>`;
-          }).join('')}
-        </div>
-      </div>
-
-      <!-- Zone -->
-      <div>
-        <div style="font-size:11px;color:var(--text4);margin-bottom:6px;font-family:'Share Tech Mono',monospace">ZONE / LIEU</div>
-        <input id="anomalieLieu" class="form-input" type="text" placeholder="Ex: Hall 1, Parking Niveau 2…" style="margin-bottom:0">
-      </div>
-
-      <!-- Description -->
-      <div>
-        <div style="font-size:11px;color:var(--text4);margin-bottom:6px;font-family:'Share Tech Mono',monospace">DESCRIPTION</div>
-        <textarea id="anomalieDesc" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:12px;color:#fff;font-family:'Cormorant Garamond',serif;font-size:13px;resize:none;min-height:80px;outline:none;box-sizing:border-box" placeholder="Décrivez l'anomalie constatée…"></textarea>
-      </div>
-
-      <!-- Sévérité -->
-      <div>
-        <div style="font-size:11px;color:var(--text4);margin-bottom:6px;font-family:'Share Tech Mono',monospace">SÉVÉRITÉ</div>
-        <div style="display:flex;gap:8px">
-          ${[['normal','✅ Normal','var(--green)'],['urgent','⚡ Urgent','var(--gold)'],['critique','🔴 Critique','var(--red)']].map(([v,l,c])=>
-            `<button onclick="selectAnomalieSev(this,'${v}')" class="anomalie-sev-btn" style="flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:10px 6px;font-size:11px;color:${c};cursor:pointer;font-family:'Cormorant Garamond',serif;font-weight:700">${l}</button>`
-          ).join('')}
-        </div>
-      </div>
-
-      <!-- Bouton envoyer -->
-      <button onclick="submitAnomalieReport()" 
-        style="width:100%;background:linear-gradient(135deg,#E53935,#B71C1C);border:none;border-radius:12px;padding:16px;font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:700;color:#fff;cursor:pointer;margin-top:4px">
-        📤 ENVOYER LE RAPPORT
-      </button>
-      <div style="height:20px"></div>
-    </div>`;
-  document.body.appendChild(modal);
-
-  // Init state
-  window._anomalieState = { photo: null, photoDataUrl: null, geo: null, type: null, sev: 'urgent' };
-  // Auto-géolocalisation
-  getAnomalieGeo();
-  // Timestamp en direct
-  setInterval(()=>{
-    const ts = document.getElementById('anomaliePhotoTimestamp');
-    if(ts && window._anomalieState?.photo) {
-      ts.textContent = new Date().toLocaleString('fr-FR');
-    }
-  }, 1000);
-}
-
-function triggerAnomalieCamera() {
-  document.getElementById('anomalieFileInput')?.click();
-}
-
-function handleAnomaliePhoto(input) {
-  if(!input.files?.[0]) return;
-  const file = input.files[0];
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const dataUrl = e.target.result;
-    window._anomalieState.photo = file;
-    window._anomalieState.photoDataUrl = dataUrl;
-    window._anomalieState.photoTimestamp = new Date().toLocaleString('fr-FR');
-
-    // Afficher preview
-    document.getElementById('anomaliePhotoPlaceholder').style.display = 'none';
-    const preview = document.getElementById('anomaliePhotoPreview');
-    preview.src = dataUrl;
-    preview.style.display = 'block';
-    const ts = document.getElementById('anomaliePhotoTimestamp');
-    ts.textContent = window._anomalieState.photoTimestamp;
-    ts.style.display = 'block';
-
-    // Changer la bordure
-    document.getElementById('anomaliePhotoZone').style.borderColor = 'var(--green)';
-    showToast('✅ Photo enregistrée — ' + window._anomalieState.photoTimestamp);
-  };
-  reader.readAsDataURL(file);
-}
-
-function getAnomalieGeo() {
-  const geoText = document.getElementById('anomalieGeoText');
-  if(!geoText) return;
-  geoText.textContent = '⏳ Localisation en cours…';
-  geoText.style.color = 'var(--gold)';
-  if (!navigator.geolocation) {
-    geoText.textContent = '❌ Géolocalisation non disponible';
-    geoText.style.color = 'var(--red)';
-    return;
-  }
-  navigator.geolocation.getCurrentPosition(
-    (pos) => {
-      const lat = pos.coords.latitude.toFixed(6);
-      const lng = pos.coords.longitude.toFixed(6);
-      const acc = Math.round(pos.coords.accuracy);
-      window._anomalieState.geo = { lat, lng, acc };
-      geoText.innerHTML = `<strong style="color:var(--green)">✅ Localisé</strong><br>
-        <span style="font-size:10px;font-family:'Share Tech Mono',monospace">${lat}, ${lng}</span><br>
-        <span style="font-size:10px;color:var(--text4)">Précision : ±${acc}m</span>`;
-      geoText.style.color = 'var(--text2)';
-    },
-    (err) => {
-      geoText.textContent = `⚠ ${err.message} — HTTPS requis`;
-      geoText.style.color = 'var(--red)';
-    },
-    { enableHighAccuracy: true, timeout: 10000 }
-  );
-}
-
-function selectAnomalieType(btn, type) {
-  document.querySelectorAll('.anomalie-type-btn').forEach(b => {
-    b.style.background = 'var(--bg3)';
-    b.style.borderColor = 'var(--border2)';
-  });
-  btn.style.background = 'rgba(229,57,53,.15)';
-  btn.style.borderColor = 'var(--red)';
-  window._anomalieState.type = type;
-}
-
-function selectAnomalieSev(btn, sev) {
-  document.querySelectorAll('.anomalie-sev-btn').forEach(b => {
-    b.style.background = 'var(--bg3)';
-    b.style.borderColor = 'var(--border2)';
-  });
-  const colors = {normal:'var(--green)',urgent:'var(--gold)',critique:'var(--red)'};
-  btn.style.background = `${colors[sev]}22`;
-  btn.style.borderColor = colors[sev];
-  window._anomalieState.sev = sev;
-}
-
-function submitAnomalieReport() {
-  const st = window._anomalieState;
-  if (!st.photo) { showToast('⚠ Photo obligatoire', true); return; }
-  if (!st.type)  { showToast('⚠ Sélectionnez un type d\'anomalie', true); return; }
-
-  const lieu = document.getElementById('anomalieLieu')?.value.trim() || S.session?.site || '—';
-  const desc = document.getElementById('anomalieDesc')?.value.trim() || '';
-  const geoStr = st.geo ? `[GPS: ${st.geo.lat},${st.geo.lng} ±${st.geo.acc}m]` : '[GPS: non disponible]';
-  const timestamp = st.photoTimestamp || new Date().toLocaleString('fr-FR');
-  const agentName = S.user?.first ? S.user.first + ' ' + S.user.last : S.user?.name || 'Agent';
-  const site = S.session?.site || lieu;
-
-  const fullDesc = `[ANOMALIE ${st.type.toUpperCase()}] ${desc} — Photo: ${timestamp} — ${geoStr}`;
-
-  // 1. Ajouter à la main courante
-  addEntry('Anomalie', st.sev, fullDesc, lieu);
-
-  // 2. Créer une NC visible par le client ET l'admin
-  const nc = {
-    id: Date.now(),
-    date: new Date().toISOString().split('T')[0],
-    time: new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'}),
-    agent: agentName,
-    site: site,
-    type: 'Anomalie',
-    cat: st.type,
-    sev: st.sev,
-    desc: desc || fullDesc,
-    gps: geoStr,
-    photo: st.photo, // base64 de la photo
-    photoTimestamp: timestamp,
-    status: 'En cours',
-    source: 'agent_rapport',
-    createdAt: new Date().toISOString()
-  };
-
-  // Sauvegarder NC localement
-  const ncs = JSON.parse(localStorage.getItem('vp3_nc') || '[]');
-  ncs.push(nc);
-  localStorage.setItem('vp3_nc', JSON.stringify(ncs));
-
-  // Envoyer à Firebase (client le voit en temps réel via listenNC)
-  if (window.FB && navigator.onLine) {
-    window.FB.saveNC(nc).catch(() => queueOffline('nc', nc));
-  } else {
-    queueOffline('nc', nc);
-  }
-
-  // 3. Notifier l'admin par message
-  const adminMsg = {
-    id: Date.now() + 1,
-    from: 'agent',
-    fromName: agentName,
-    to: 'admin',
-    date: new Date().toISOString(),
-    sentAt: new Date().toISOString(),
-    read: false,
-    type: 'anomalie',
-    text: `🚨 RAPPORT ANOMALIE — ${st.type.toUpperCase()}\n🏢 ${site}\n👮 ${agentName}\n⏰ ${timestamp}\n📍 ${lieu}\n${geoStr}\n\n${desc}`
-  };
-  if (window.FB && navigator.onLine) {
-    window.FB.sendMessage(adminMsg).catch(console.error);
-  }
-
-  document.getElementById('anomalieModal')?.remove();
-  showToast('✅ Rapport transmis à l\'employeur et au client');
-}
-async function testFirebaseConnection() {
-  const statusEl = document.getElementById('fbStatus');
-  if(statusEl) statusEl.innerHTML = '<span style="color:#FFA500">⏳ Diagnostic en cours…</span>';
-
-  // Attendre que Firebase soit initialisé (max 5 secondes)
-  let waited = 0;
-  while (!window.FB && waited < 5000) {
-    await new Promise(r => setTimeout(r, 300));
-    waited += 300;
-  }
-
-  // 1. Vérifier HTTPS
-  const isHttps = location.protocol === 'https:';
-  // 2. Vérifier SDK
-  const sdkLoaded = typeof firebase !== 'undefined';
-  // 3. Vérifier FB
-  const fbReady = !!window.FB;
-  // 4. Test réseau vers Firebase
-  let networkOk = false;
-  try {
-    const r = await fetch('https://firestore.googleapis.com/', { method: 'HEAD', mode: 'no-cors' });
-    networkOk = true;
-  } catch(e) { networkOk = false; }
-
-  const lines = [
-    `${isHttps ? '✅' : '❌'} HTTPS : ${location.protocol}`,
-    `${sdkLoaded ? '✅' : '❌'} SDK Firebase : ${sdkLoaded ? 'chargé' : 'absent'}`,
-    `${fbReady ? '✅' : '❌'} window.FB : ${fbReady ? 'prêt' : 'non initialisé'}`,
-    `${networkOk ? '✅' : '❌'} Réseau Firestore : ${networkOk ? 'accessible' : 'bloqué'}`,
-    `📍 Domaine : ${location.hostname}`,
-  ];
-
-  // 5. Test Firestore si FB prêt
-  let fsOk = false;
-  if(fbReady) {
-    try {
-      await window.FB.loadConfig();
-      fsOk = true;
-      lines.push('✅ Lecture Firestore : OK');
-    } catch(e) {
-      lines.push(`❌ Firestore : ${e.message}`);
-    }
-  }
-
-  const allOk = isHttps && sdkLoaded && fbReady && networkOk && fsOk;
-  if(statusEl) statusEl.innerHTML = `<span style="color:${allOk?'var(--green)':'var(--red)'}">
-    ${allOk ? '✅ Tout fonctionne' : '⚠ Problème détecté'}</span>`;
-
-  // Modal diagnostic
-  const modal = document.createElement('div');
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
-  modal.innerHTML = `<div style="background:#111;border:1px solid #FFA500;border-radius:16px;padding:22px;width:100%;max-width:380px">
-    <div style="font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:700;color:#FFA500;margin-bottom:14px">🔥 Diagnostic Firebase</div>
-    <div style="font-size:12px;font-family:'Share Tech Mono',monospace;line-height:2;background:var(--bg3);border-radius:8px;padding:12px;margin-bottom:14px">
-      ${lines.map(l=>`<div>${esc(l)}</div>`).join('')}
-    </div>
-    ${!networkOk ? `<div style="background:rgba(229,57,53,.1);border:1px solid var(--red);border-radius:8px;padding:10px;font-size:11px;color:var(--red);margin-bottom:12px;line-height:1.6">
-      ⚠ Firestore.googleapis.com inaccessible.<br>
-      → Va sur <strong>console.firebase.google.com</strong><br>
-      → Authentication → Settings → <strong>Domaines autorisés</strong><br>
-      → Ajoute : <strong>${location.hostname}</strong>
-    </div>` : ''}
-    <button onclick="this.closest('div[style*=fixed]').remove()" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:10px;font-family:'Cormorant Garamond',serif;font-size:13px;color:var(--text3);cursor:pointer">Fermer</button>
-  </div>`;
-  document.body.appendChild(modal);
-}
-
-async function pushAllDataToFirebase() {
-  if(!window.FB) { showToast('⚠ Firebase non configuré', true); return; }
-  showToast('☁️ Envoi de toutes les données...');
-  let count = 0;
-  try {
-    // Comptes
-    for(const acc of S.accounts) { await window.FB.saveAccount(acc); count++; }
-    // Config
-    await window.FB.saveConfigFB(S.config); count++;
-    // Entries
-    for(const e of S.entries.slice(0,100)) { await window.FB.addEntry(e); count++; }
-    // Archives
-    for(const a of S.archives.slice(0,50)) { await window.FB.saveArchive(a); count++; }
-    // Planning
-    for(const p of S.planning) { await window.FB.savePlanning(p); count++; }
-    // NC
-    for(const nc of S.nonConformites) { await window.FB.saveNC(nc); count++; }
-    showToast(`✅ ${count} éléments envoyés vers Firebase !`);
-  } catch(e) {
-    showToast('⚠ Erreur pendant le push: ' + e.message, true);
-  }
 }
 
 function updateBioLoginButton() {}
@@ -5750,16 +4835,124 @@ function showToast(msg,isErr=false){
   _toastTimeout = setTimeout(()=>{ t.classList.remove('show'); }, 2500);
 }
 </script>
-
-<!-- PWA — Enregistrement Service Worker -->
-<script>
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js')
-      .then(reg => console.log('✅ Service Worker enregistré'))
-      .catch(err => console.warn('SW non enregistré:', err));
-  });
-}
-</script>
 </body>
 </html>
+
+<!-- ═══════════════════════════════════════════
+     FIREBASE — injecté après tout le JS
+     ═══════════════════════════════════════════ -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script>
+(function() {
+  const CFG = {
+    apiKey:            "AIzaSyBGtXMiNDkZgW2QrpWHHH9mkEgGgMsjZy0",
+    authDomain:        "vigilopro-4a63f.firebaseapp.com",
+    projectId:         "vigilopro-4a63f",
+    storageBucket:     "vigilopro-4a63f.firebasestorage.app",
+    messagingSenderId: "662305602141",
+    appId:             "1:662305602141:web:5cdb95de155858221debb4"
+  };
+
+  if (typeof firebase === 'undefined') {
+    console.warn('Firebase SDK non chargé');
+    return;
+  }
+
+  if (!firebase.apps.length) firebase.initializeApp(CFG);
+  const db     = firebase.firestore();
+  const fbAuth = firebase.auth();
+
+  db.settings({ experimentalForceLongPolling: true, merge: true });
+  db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
+
+  fbAuth.signInAnonymously().catch(() => {});
+
+  const col   = n     => db.collection(n);
+  const docR  = (n,id)=> db.collection(n).doc(String(id));
+  const ts    = ()    => firebase.firestore.FieldValue.serverTimestamp();
+  function toJS(d) {
+    if (!d.exists) return null;
+    const o = d.data();
+    Object.keys(o).forEach(k => { if(o[k]?.toDate) o[k]=o[k].toDate().toISOString(); });
+    return { id: d.id, ...o };
+  }
+
+  // ── Sync localStorage → Firestore au login ──
+  const _origLogin = window.loginSuccess || function(){};
+  window.loginSuccess = function() {
+    _origLogin.apply(this, arguments);
+    fbSync();
+    startListeners();
+  };
+
+  function fbSync() {
+    // Envoyer les données locales vers Firestore
+    const entries  = JSON.parse(localStorage.getItem('vp3_entries')  || '[]');
+    const messages = JSON.parse(localStorage.getItem('vp3_messages') || '[]');
+    const accounts = JSON.parse(localStorage.getItem('vp3_accounts') || '[]');
+
+    entries.forEach(e  => { if(e.id) docR('entries',e.id).set({...e, _sync:ts()}).catch(()=>{}); });
+    messages.forEach(m => { if(m.id) docR('messages',m.id).set({...m, _sync:ts()}).catch(()=>{}); });
+    accounts.forEach(a => { if(a.id) docR('accounts',a.id).set({...a, _sync:ts()}).catch(()=>{}); });
+  }
+
+  function startListeners() {
+    // Écouter les entrées temps réel
+    col('entries').onSnapshot(snap => {
+      const remote = snap.docs.map(toJS).filter(Boolean);
+      if (!remote.length) return;
+      const local = JSON.parse(localStorage.getItem('vp3_entries') || '[]');
+      const merged = [...local];
+      remote.forEach(r => { if (!merged.find(l => String(l.id) === String(r.id))) merged.push(r); });
+      localStorage.setItem('vp3_entries', JSON.stringify(merged));
+      if (typeof renderEntries === 'function') renderEntries();
+      if (typeof renderAdminLogbook === 'function') renderAdminLogbook();
+    }, () => {});
+
+    // Écouter les messages temps réel
+    col('messages').onSnapshot(snap => {
+      const remote = snap.docs.map(toJS).filter(Boolean);
+      if (!remote.length) return;
+      localStorage.setItem('vp3_messages', JSON.stringify(remote));
+      if (typeof renderMessages === 'function') renderMessages();
+    }, () => {});
+
+    // Écouter les NCs temps réel
+    col('nonConformites').onSnapshot(snap => {
+      const remote = snap.docs.map(toJS).filter(Boolean);
+      if (!remote.length) return;
+      if (S && typeof S === 'object') S.nonConformites = remote;
+      if (typeof renderNCList === 'function') renderNCList();
+    }, () => {});
+  }
+
+  // ── Patch saveEntries pour sync Firestore ──
+  const _origSaveEntries = window.saveEntries || function(){};
+  window.saveEntries = function() {
+    _origSaveEntries.apply(this, arguments);
+    const entries = JSON.parse(localStorage.getItem('vp3_entries') || '[]');
+    entries.forEach(e => { if(e.id) docR('entries', e.id).set({...e, _sync:ts()}).catch(()=>{}); });
+  };
+
+  // ── Patch saveMessages pour sync Firestore ──
+  const _origSaveMessages = window.saveMessages || function(){};
+  window.saveMessages = function(msgs) {
+    _origSaveMessages.apply(this, arguments);
+    (msgs||[]).forEach(m => { if(m.id) docR('messages', m.id).set({...m, _sync:ts()}).catch(()=>{}); });
+  };
+
+  // ── Patch saveArchive pour sync Firestore ──
+  window._fbSaveArchive = function(archive) {
+    if (archive?.id) docR('archives', archive.id).set({...archive, _sync:ts()}).catch(()=>{});
+  };
+
+  // ── Patch saveNC pour sync Firestore ──
+  window._fbSaveNC = function(nc) {
+    if (nc?.id) docR('nonConformites', nc.id).set({...nc, _sync:ts()}).catch(()=>{});
+  };
+
+  console.log('✅ Firebase branché (mode sync localStorage)');
+})();
+</script>
