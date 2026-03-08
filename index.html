@@ -4856,6 +4856,7 @@ function showToast(msg,isErr=false){
   db.settings({ experimentalForceLongPolling: true, merge: true });
   db.enablePersistence({ synchronizeTabs: true }).catch(function(){});
   firebase.auth().signInAnonymously().catch(function(){});
+
   function col(n) { return db.collection(n); }
   function docR(n, id) { return db.collection(n).doc(String(id)); }
   function ts() { return firebase.firestore.FieldValue.serverTimestamp(); }
@@ -4867,41 +4868,83 @@ function showToast(msg,isErr=false){
     });
     return Object.assign({ id: d.id }, o);
   }
-  function esc2(t) { return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function e(t) { return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
+  // Badge admin pour messages non lus
+  function updateAdminMsgBadge(msgs) {
+    var unread = msgs.filter(function(m){ return !m.read && m.to === 'admin'; }).length;
+    // Chercher ou creer le badge admin
+    var btn = document.querySelector('[onclick="openAdminMessaging()"]');
+    if (!btn) return;
+    var badge = document.getElementById('adminMsgBadge');
+    if (!badge) {
+      badge = document.createElement('span');
+      badge.id = 'adminMsgBadge';
+      badge.style.cssText = 'position:absolute;top:-4px;right:-4px;background:#FF3B4E;color:#fff;font-size:10px;font-weight:700;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-family:monospace';
+      btn.style.position = 'relative';
+      btn.appendChild(badge);
+    }
+    if (unread > 0) {
+      badge.textContent = unread;
+      badge.style.display = 'flex';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
+  // Rafraichir thread admin si modale ouverte
   function refreshAdminThread(msgs) {
     var thread = document.getElementById('adminMsgThread');
-    if (!thread || !window.S || S.role !== 'admin') return;
+    if (!thread) return;
+    if (!msgs.length) {
+      thread.innerHTML = '<div style="text-align:center;color:#555;padding:20px;font-size:13px">Aucun message</div>';
+      return;
+    }
     thread.innerHTML = msgs.map(function(m) {
       var isMine = m.from === 'admin';
       var time = new Date(m.date).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
       var bg = isMine ? 'linear-gradient(135deg,#2196F3,#1565C0)' : '#1a1a1a';
       var align = isMine ? 'flex-end' : 'flex-start';
-      var who = isMine ? 'Vous' : ('Agent ' + esc2(m.fromName||''));
+      var who = isMine ? 'Vous' : ('Agent ' + e(m.fromName||''));
       return '<div style="display:flex;justify-content:' + align + ';margin-bottom:10px">' +
         '<div style="max-width:80%;background:' + bg + ';border-radius:16px;padding:10px 14px">' +
-        '<div style="font-size:13px;color:#fff">' + esc2(m.text) + '</div>' +
+        '<div style="font-size:13px;color:#fff">' + e(m.text) + '</div>' +
         '<div style="font-size:9px;color:rgba(255,255,255,.4);margin-top:4px;text-align:right">' + who + ' - ' + time + '</div>' +
         '</div></div>';
     }).join('');
-    setTimeout(function(){ thread.scrollTop = thread.scrollHeight; }, 50);
+    thread.scrollTop = thread.scrollHeight;
   }
 
   function startListeners() {
     col('messages').onSnapshot(function(snap) {
-      var msgs = snap.docs.map(toJS).filter(Boolean).sort(function(a,b){ return a.date > b.date ? 1 : -1; });
+      var msgs = snap.docs.map(toJS).filter(Boolean).sort(function(a,b){
+        return (a.date||'') > (b.date||'') ? 1 : -1;
+      });
       localStorage.setItem('vp3_messages', JSON.stringify(msgs));
-      if (typeof renderMsgThread === 'function') renderMsgThread();
-      refreshAdminThread(msgs);
-      if (typeof updateMsgBadge === 'function') updateMsgBadge();
+
+      if (window.S && S.role === 'admin') {
+        refreshAdminThread(msgs);
+        updateAdminMsgBadge(msgs);
+        // Toast si nouveau message agent
+        var unread = msgs.filter(function(m){ return !m.read && m.to === 'admin'; });
+        if (unread.length > 0) {
+          var last = unread[unread.length - 1];
+          if (typeof showToast === 'function') showToast('Agent : ' + (last.text||'').slice(0,40));
+        }
+      } else {
+        // Role agent
+        if (typeof renderMsgThread === 'function') renderMsgThread();
+        if (typeof updateMsgBadge === 'function') updateMsgBadge();
+      }
     }, function(){});
 
     col('entries').onSnapshot(function(snap) {
       var remote = snap.docs.map(toJS).filter(Boolean);
       if (!remote.length) return;
       localStorage.setItem('vp3_entries', JSON.stringify(remote));
-      if (typeof renderEntries === 'function') renderEntries();
       if (typeof renderAdminLogbook === 'function') renderAdminLogbook();
+      if (typeof updateAdminStats === 'function') updateAdminStats();
+      if (typeof renderEntries === 'function') renderEntries();
     }, function(){});
 
     col('nonConformites').onSnapshot(function(snap) {
@@ -4912,30 +4955,33 @@ function showToast(msg,isErr=false){
     }, function(){});
   }
 
+  // Patch saveMessages
   var _origSaveMsg = window.saveMessages;
   window.saveMessages = function(msgs) {
     if (_origSaveMsg) _origSaveMsg.apply(this, arguments);
     (msgs||[]).forEach(function(m) {
-      if (m.id) docR('messages', m.id).set(Object.assign({}, m, { _sync: ts() })).catch(function(){});
+      if (m.id) docR('messages', m.id).set(Object.assign({}, m, {_sync: ts()})).catch(function(){});
     });
   };
 
+  // Patch saveEntries
   var _origSaveE = window.saveEntries;
   window.saveEntries = function() {
     if (_origSaveE) _origSaveE.apply(this, arguments);
     var entries = JSON.parse(localStorage.getItem('vp3_entries') || '[]');
     entries.forEach(function(en) {
-      if (en.id) docR('entries', en.id).set(Object.assign({}, en, { _sync: ts() })).catch(function(){});
+      if (en.id) docR('entries', en.id).set(Object.assign({}, en, {_sync: ts()})).catch(function(){});
     });
   };
 
+  // Patch loginSuccess
   var _origLogin = window.loginSuccess;
   window.loginSuccess = function() {
     if (_origLogin) _origLogin.apply(this, arguments);
     startListeners();
     var accounts = JSON.parse(localStorage.getItem('vp3_accounts') || '[]');
     accounts.forEach(function(a) {
-      if (a.id) docR('accounts', a.id).set(Object.assign({}, a, { _sync: ts() })).catch(function(){});
+      if (a.id) docR('accounts', a.id).set(Object.assign({}, a, {_sync: ts()})).catch(function(){});
     });
   };
 
