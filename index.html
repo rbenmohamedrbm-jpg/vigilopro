@@ -4853,7 +4853,7 @@ function showToast(msg,isErr=false){
   };
   if (!firebase.apps.length) firebase.initializeApp(CFG);
   var db = firebase.firestore();
-  db.settings({ experimentalForceLongPolling: true, merge: true });
+  db.settings({ merge: true });
   db.enablePersistence({ synchronizeTabs: true }).catch(function(){});
   firebase.auth().signInAnonymously().catch(function(){});
 
