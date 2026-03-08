@@ -79,14 +79,6 @@
 </script>
 <script>
 // ─── CONFIGURATION FIREBASE ─────────────────────────────
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const FIREBASE_CONFIG = {
   apiKey:            "AIzaSyBGtXMiNDkZgW2QrpWHHH9mkEgGgMsjZy0",
   authDomain:        "vigilopro-4a63f.firebaseapp.com",
@@ -96,10 +88,6 @@ const FIREBASE_CONFIG = {
   appId:             "1:662305602141:web:5cdb95de155858221debb4",
   measurementId:     "G-BVRWLN161L"
 };
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
 
 // window.FB stub — actif immédiatement, opérationnel après init
 window.FB = null;
@@ -2215,14 +2203,31 @@ function saveMessages(msgs) {
 }
 
 function sendAgentMessage() {
-  const input=document.getElementById('msgInput');
-  const text=(input?.value||'').trim();
-  if(!text) return;
-  const myName=S.user?.first?S.user.first+' '+S.user.last:S.user?.name||'Agent';
-  const msgs=getMessages();
-  msgs.push({id:Date.now(),from:'agent',fromName:myName,to:'admin',text,date:new Date().toISOString(),read:false});
-  saveMessages(msgs);
-  if(input){input.value='';input.style.height='auto';}
+  const input = document.getElementById('msgInput');
+  const text = (input?.value || '').trim();
+  if (!text) return;
+  const myName = S.user?.first ? S.user.first + ' ' + S.user.last : S.user?.name || 'Agent';
+  const msg = {
+    id: Date.now(),
+    from: 'agent',
+    fromName: myName,
+    to: 'admin',
+    text,
+    date: new Date().toISOString(),
+    sentAt: new Date().toISOString(),
+    read: false
+  };
+  // Envoi direct Firebase — pas de localStorage intermédiaire
+  if (window.FB && navigator.onLine) {
+    window.FB.sendMessage(msg).catch(() => queueOffline('message', msg));
+  } else {
+    queueOffline('message', msg);
+    // Affichage local immédiat
+    const msgs = getMessages();
+    msgs.push(msg);
+    localStorage.setItem('vp3_messages', JSON.stringify(msgs));
+  }
+  if (input) { input.value = ''; input.style.height = 'auto'; }
   renderMsgThread();
   showToast('💬 Message envoyé au responsable');
 }
@@ -2324,31 +2329,50 @@ function openAdminMessaging() {
 }
 
 function adminSendMsg() {
-  const inp=document.getElementById('adminMsgInput');
-  const text=(inp?.value||'').trim();
-  if(!text) return;
-  const adminName=S.user?.first?S.user.first+' '+S.user.last:S.user?.name||'Responsable';
-  // Trouver agent en poste
-  const agentOnDuty=S.session?.agentName||S.accounts.find(a=>a.role==='agent'&&a.active)?.first+' '+(S.accounts.find(a=>a.role==='agent'&&a.active)?.last||'')||'Agent';
-  const msgs=getMessages();
-  msgs.push({id:Date.now(),from:'admin',fromName:adminName,to:'agent',toName:agentOnDuty,text,date:new Date().toISOString(),read:false});
-  saveMessages(msgs);
-  if(inp){inp.value='';}
-  // Refresh thread
-  const thread=document.getElementById('adminMsgThread');
-  if(thread){
-    const allM=getMessages();
-    thread.innerHTML=allM.map(m=>{
-      const isMine=m.from==='admin';
-      const d=new Date(m.date);
-      const time=d.toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+  const inp = document.getElementById('adminMsgInput');
+  const text = (inp?.value || '').trim();
+  if (!text) return;
+  const adminName = S.user?.first ? S.user.first + ' ' + S.user.last : S.user?.name || 'Responsable';
+
+  const msg = {
+    id: Date.now(),
+    from: 'admin',
+    fromName: adminName,
+    to: 'agent',
+    text,
+    date: new Date().toISOString(),
+    sentAt: new Date().toISOString(),
+    read: false
+  };
+
+  // Envoi direct Firebase
+  if (window.FB && navigator.onLine) {
+    window.FB.sendMessage(msg).catch(() => queueOffline('message', msg));
+  } else {
+    queueOffline('message', msg);
+    const msgs = getMessages();
+    msgs.push(msg);
+    localStorage.setItem('vp3_messages', JSON.stringify(msgs));
+  }
+
+  if (inp) inp.value = '';
+
+  // Refresh thread admin
+  const thread = document.getElementById('adminMsgThread');
+  if (thread) {
+    const allM = getMessages();
+    allM.push(msg); // Affichage immédiat avant sync Firebase
+    thread.innerHTML = allM.map(m => {
+      const isMine = m.from === 'admin';
+      const d = new Date(m.date);
+      const time = d.toLocaleString('fr-FR', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
       return `<div style="display:flex;justify-content:${isMine?'flex-end':'flex-start'};margin-bottom:10px">
         <div style="max-width:80%;background:${isMine?'linear-gradient(135deg,var(--blue),var(--blue2))':'var(--bg3)'};border-radius:16px;padding:10px 14px">
           <div style="font-size:13px;color:#fff">${esc(m.text)}</div>
           <div style="font-size:9px;color:rgba(255,255,255,.4);margin-top:4px;text-align:right">${isMine?'Vous':'👮 '+esc(m.fromName)} · ${time}</div>
         </div></div>`;
     }).join('');
-    setTimeout(()=>thread.scrollTop=thread.scrollHeight,50);
+    setTimeout(() => thread.scrollTop = thread.scrollHeight, 50);
   }
   showToast('💬 Message envoyé à l\'agent');
 }
@@ -3952,25 +3976,44 @@ function getSiteEmail(siteName) {
 }
 
 function showEndShiftModal(archive) {
-  // ── Envoyer la main courante à l'Admin via message Firebase ──
-  const entries = S.entries.filter(e => e.date === archive.date);
-  const nbUrgent = entries.filter(e=>e.sev==='urgent'||e.sev==='critique').length;
-  const summary = entries.slice(0,10).map(e=>`[${e.time}] ${e.cat} (${e.sev}) — ${e.desc.slice(0,60)}`).join('\n');
+  const entries = archive.entries || S.entries.filter(e => e.date === archive.date);
+  const nbUrgent = entries.filter(e => e.sev === 'urgent' || e.sev === 'critique').length;
+  const summary = entries.slice(0, 15).map(e => `[${e.time}] ${e.cat} (${e.sev}) — ${e.desc.slice(0, 60)}`).join('\n');
 
-  const transmissionMsg = {
+  // ── 1. Message Admin (messagerie interne) ──
+  const adminMsg = {
     id: Date.now(),
     from: 'agent',
     fromName: archive.agent,
     to: 'admin',
     date: new Date().toISOString(),
+    sentAt: new Date().toISOString(),
     read: false,
     type: 'fin_service',
-    text: `📋 FIN DE SERVICE — ${archive.agent}\n🏢 ${archive.site} | ${archive.date} | ${archive.heureDebut}→${archive.heureFin}\n📊 ${entries.length} événements (${nbUrgent} urgents)\n\n${summary}${entries.length>10?`\n... et ${entries.length-10} autres événements`:''}`,
+    text: `📋 FIN DE SERVICE — ${archive.agent}\n🏢 ${archive.site} | ${archive.date} | ${archive.heureDebut}→${archive.heureFin}\n📊 ${entries.length} événements (${nbUrgent} urgents)\n\n${summary}${entries.length > 15 ? `\n... et ${entries.length - 15} autres` : ''}`
   };
+  if (window.FB && navigator.onLine) {
+    window.FB.sendMessage(adminMsg).catch(console.error);
+  }
 
-  // Envoyer à Firebase (Admin le verra en temps réel)
-  if(window.FB && navigator.onLine) {
-    window.FB.sendMessage(transmissionMsg).catch(console.error);
+  // ── 2. NC de fin de service pour le Client (visible dans son onglet Signalements) ──
+  const clientNC = {
+    id: Date.now() + 1,
+    date: archive.date,
+    time: archive.heureFin,
+    agent: archive.agent,
+    site: archive.site,
+    type: 'Fin de service',
+    cat: 'Rapport vacation',
+    sev: nbUrgent > 0 ? 'urgent' : 'normal',
+    desc: `Vacation ${archive.heureDebut}→${archive.heureFin} — ${entries.length} événements (${nbUrgent} urgents)`,
+    status: 'En attente de validation',
+    source: 'fin_service',
+    entries: entries,
+    createdAt: new Date().toISOString()
+  };
+  if (window.FB && navigator.onLine) {
+    window.FB.saveNC(clientNC).catch(console.error);
   }
 
   const modal = document.createElement('div');
@@ -5708,17 +5751,66 @@ function submitAnomalieReport() {
   if (!st.type)  { showToast('⚠ Sélectionnez un type d\'anomalie', true); return; }
 
   const lieu = document.getElementById('anomalieLieu')?.value.trim() || S.session?.site || '—';
-  const desc = document.getElementById('anomalieDesc')?.value.trim();
+  const desc = document.getElementById('anomalieDesc')?.value.trim() || '';
   const geoStr = st.geo ? `[GPS: ${st.geo.lat},${st.geo.lng} ±${st.geo.acc}m]` : '[GPS: non disponible]';
   const timestamp = st.photoTimestamp || new Date().toLocaleString('fr-FR');
+  const agentName = S.user?.first ? S.user.first + ' ' + S.user.last : S.user?.name || 'Agent';
+  const site = S.session?.site || lieu;
 
-  const fullDesc = `[ANOMALIE ${st.type.toUpperCase()}] ${desc||''} — Photo: ${timestamp} — ${geoStr}`;
+  const fullDesc = `[ANOMALIE ${st.type.toUpperCase()}] ${desc} — Photo: ${timestamp} — ${geoStr}`;
 
+  // 1. Ajouter à la main courante
   addEntry('Anomalie', st.sev, fullDesc, lieu);
 
-  // Fermer modal
+  // 2. Créer une NC visible par le client ET l'admin
+  const nc = {
+    id: Date.now(),
+    date: new Date().toISOString().split('T')[0],
+    time: new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'}),
+    agent: agentName,
+    site: site,
+    type: 'Anomalie',
+    cat: st.type,
+    sev: st.sev,
+    desc: desc || fullDesc,
+    gps: geoStr,
+    photo: st.photo, // base64 de la photo
+    photoTimestamp: timestamp,
+    status: 'En cours',
+    source: 'agent_rapport',
+    createdAt: new Date().toISOString()
+  };
+
+  // Sauvegarder NC localement
+  const ncs = JSON.parse(localStorage.getItem('vp3_nc') || '[]');
+  ncs.push(nc);
+  localStorage.setItem('vp3_nc', JSON.stringify(ncs));
+
+  // Envoyer à Firebase (client le voit en temps réel via listenNC)
+  if (window.FB && navigator.onLine) {
+    window.FB.saveNC(nc).catch(() => queueOffline('nc', nc));
+  } else {
+    queueOffline('nc', nc);
+  }
+
+  // 3. Notifier l'admin par message
+  const adminMsg = {
+    id: Date.now() + 1,
+    from: 'agent',
+    fromName: agentName,
+    to: 'admin',
+    date: new Date().toISOString(),
+    sentAt: new Date().toISOString(),
+    read: false,
+    type: 'anomalie',
+    text: `🚨 RAPPORT ANOMALIE — ${st.type.toUpperCase()}\n🏢 ${site}\n👮 ${agentName}\n⏰ ${timestamp}\n📍 ${lieu}\n${geoStr}\n\n${desc}`
+  };
+  if (window.FB && navigator.onLine) {
+    window.FB.sendMessage(adminMsg).catch(console.error);
+  }
+
   document.getElementById('anomalieModal')?.remove();
-  showToast('✅ Rapport d\'anomalie enregistré et transmis');
+  showToast('✅ Rapport transmis à l\'employeur et au client');
 }
 async function testFirebaseConnection() {
   const statusEl = document.getElementById('fbStatus');
