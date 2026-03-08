@@ -4834,18 +4834,17 @@ function showToast(msg,isErr=false){
   t.classList.add('show');
   _toastTimeout = setTimeout(()=>{ t.classList.remove('show'); }, 2500);
 }
-</script>
-</body>
-</html>
 
 <!-- ═══════════════════════════════════════════
-     FIREBASE — injecté après tout le JS
+     FIREBASE — messagerie temps réel
      ═══════════════════════════════════════════ -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 <script>
 (function() {
+  if (typeof firebase === 'undefined') return;
+
   const CFG = {
     apiKey:            "AIzaSyBGtXMiNDkZgW2QrpWHHH9mkEgGgMsjZy0",
     authDomain:        "vigilopro-4a63f.firebaseapp.com",
@@ -4855,104 +4854,82 @@ function showToast(msg,isErr=false){
     appId:             "1:662305602141:web:5cdb95de155858221debb4"
   };
 
-  if (typeof firebase === 'undefined') {
-    console.warn('Firebase SDK non chargé');
-    return;
-  }
-
   if (!firebase.apps.length) firebase.initializeApp(CFG);
-  const db     = firebase.firestore();
-  const fbAuth = firebase.auth();
-
+  const db  = firebase.firestore();
   db.settings({ experimentalForceLongPolling: true, merge: true });
   db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
+  firebase.auth().signInAnonymously().catch(() => {});
 
-  fbAuth.signInAnonymously().catch(() => {});
+  const col  = n      => db.collection(n);
+  const docR = (n,id) => db.collection(n).doc(String(id));
+  const ts   = ()     => firebase.firestore.FieldValue.serverTimestamp();
 
-  const col   = n     => db.collection(n);
-  const docR  = (n,id)=> db.collection(n).doc(String(id));
-  const ts    = ()    => firebase.firestore.FieldValue.serverTimestamp();
   function toJS(d) {
     if (!d.exists) return null;
     const o = d.data();
-    Object.keys(o).forEach(k => { if(o[k]?.toDate) o[k]=o[k].toDate().toISOString(); });
+    Object.keys(o).forEach(k => { if(o[k]?.toDate) o[k] = o[k].toDate().toISOString(); });
     return { id: d.id, ...o };
   }
 
-  // ── Sync localStorage → Firestore au login ──
-  const _origLogin = window.loginSuccess || function(){};
-  window.loginSuccess = function() {
-    _origLogin.apply(this, arguments);
-    fbSync();
-    startListeners();
-  };
+  function e(t) { return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-  function fbSync() {
-    // Envoyer les données locales vers Firestore
-    const entries  = JSON.parse(localStorage.getItem('vp3_entries')  || '[]');
-    const messages = JSON.parse(localStorage.getItem('vp3_messages') || '[]');
-    const accounts = JSON.parse(localStorage.getItem('vp3_accounts') || '[]');
-
-    entries.forEach(e  => { if(e.id) docR('entries',e.id).set({...e, _sync:ts()}).catch(()=>{}); });
-    messages.forEach(m => { if(m.id) docR('messages',m.id).set({...m, _sync:ts()}).catch(()=>{}); });
-    accounts.forEach(a => { if(a.id) docR('accounts',a.id).set({...a, _sync:ts()}).catch(()=>{}); });
+  // ── Rendu thread admin ──
+  function refreshAdminThread(msgs) {
+    const thread = document.getElementById('adminMsgThread');
+    if (!thread || !S || S.role !== 'admin') return;
+    thread.innerHTML = msgs.map(m => {
+      const isMine = m.from === 'admin';
+      const time = new Date(m.date).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+      return `<div style="display:flex;justify-content:${isMine?'flex-end':'flex-start'};margin-bottom:10px">
+        <div style="max-width:80%;background:${isMine?'linear-gradient(135deg,#2196F3,#1565C0)':'#1a1a1a'};border-radius:16px;padding:10px 14px">
+          <div style="font-size:13px;color:#fff">${e(m.text)}</div>
+          <div style="font-size:9px;color:rgba(255,255,255,.4);margin-top:4px;text-align:right">${isMine?'Vous':'👮 '+e(m.fromName||'Agent')} · ${time}</div>
+        </div></div>`;
+    }).join('');
+    setTimeout(() => thread.scrollTop = thread.scrollHeight, 50);
   }
 
-  function startListeners() {
-    // Écouter les entrées temps réel
-    col('entries').onSnapshot(snap => {
-      const remote = snap.docs.map(toJS).filter(Boolean);
-      if (!remote.length) return;
-      const local = JSON.parse(localStorage.getItem('vp3_entries') || '[]');
-      const merged = [...local];
-      remote.forEach(r => { if (!merged.find(l => String(l.id) === String(r.id))) merged.push(r); });
-      localStorage.setItem('vp3_entries', JSON.stringify(merged));
-      if (typeof renderEntries === 'function') renderEntries();
-      if (typeof renderAdminLogbook === 'function') renderAdminLogbook();
-    }, () => {});
-
-    // Écouter les messages temps réel
+  // ── Listener messages temps réel ──
+  function startMsgListener() {
     col('messages').onSnapshot(snap => {
-      const remote = snap.docs.map(toJS).filter(Boolean);
-      if (!remote.length) return;
-      localStorage.setItem('vp3_messages', JSON.stringify(remote));
-      if (typeof renderMessages === 'function') renderMessages();
-    }, () => {});
-
-    // Écouter les NCs temps réel
-    col('nonConformites').onSnapshot(snap => {
-      const remote = snap.docs.map(toJS).filter(Boolean);
-      if (!remote.length) return;
-      if (S && typeof S === 'object') S.nonConformites = remote;
-      if (typeof renderNCList === 'function') renderNCList();
+      const msgs = snap.docs.map(toJS).filter(Boolean).sort((a,b) => a.date > b.date ? 1 : -1);
+      localStorage.setItem('vp3_messages', JSON.stringify(msgs));
+      if (typeof renderMsgThread === 'function') renderMsgThread();
+      refreshAdminThread(msgs);
+      if (typeof updateMsgBadge === 'function') updateMsgBadge();
     }, () => {});
   }
 
-  // ── Patch saveEntries pour sync Firestore ──
-  const _origSaveEntries = window.saveEntries || function(){};
-  window.saveEntries = function() {
-    _origSaveEntries.apply(this, arguments);
-    const entries = JSON.parse(localStorage.getItem('vp3_entries') || '[]');
-    entries.forEach(e => { if(e.id) docR('entries', e.id).set({...e, _sync:ts()}).catch(()=>{}); });
-  };
-
-  // ── Patch saveMessages pour sync Firestore ──
-  const _origSaveMessages = window.saveMessages || function(){};
+  // ── Patch saveMessages — envoie chaque message dans Firestore ──
+  const _origSave = window.saveMessages;
   window.saveMessages = function(msgs) {
-    _origSaveMessages.apply(this, arguments);
-    (msgs||[]).forEach(m => { if(m.id) docR('messages', m.id).set({...m, _sync:ts()}).catch(()=>{}); });
+    if (_origSave) _origSave.apply(this, arguments);
+    (msgs||[]).forEach(m => {
+      if (m.id) docR('messages', m.id).set({...m, _sync: ts()}).catch(() => {});
+    });
   };
 
-  // ── Patch saveArchive pour sync Firestore ──
-  window._fbSaveArchive = function(archive) {
-    if (archive?.id) docR('archives', archive.id).set({...archive, _sync:ts()}).catch(()=>{});
+  // ── Patch saveEntries ──
+  const _origSaveE = window.saveEntries;
+  window.saveEntries = function() {
+    if (_origSaveE) _origSaveE.apply(this, arguments);
+    const entries = JSON.parse(localStorage.getItem('vp3_entries') || '[]');
+    entries.forEach(en => { if(en.id) docR('entries', en.id).set({...en, _sync:ts()}).catch(()=>{}); });
   };
 
-  // ── Patch saveNC pour sync Firestore ──
-  window._fbSaveNC = function(nc) {
-    if (nc?.id) docR('nonConformites', nc.id).set({...nc, _sync:ts()}).catch(()=>{});
+  // ── Patch loginSuccess — démarrer les listeners ──
+  const _origLogin = window.loginSuccess;
+  window.loginSuccess = function() {
+    if (_origLogin) _origLogin.apply(this, arguments);
+    startMsgListener();
+    // Sync accounts au login
+    const accounts = JSON.parse(localStorage.getItem('vp3_accounts') || '[]');
+    accounts.forEach(a => { if(a.id) docR('accounts', a.id).set({...a, _sync:ts()}).catch(()=>{}); });
   };
 
-  console.log('✅ Firebase branché (mode sync localStorage)');
+  console.log('✅ Firebase temps réel actif');
 })();
 </script>
+-e 
+</body>
+</html>
