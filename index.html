@@ -4870,37 +4870,52 @@ function showToast(msg,isErr=false){
   }
   function e(t) { return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-  // Badge admin pour messages non lus
-  function updateAdminMsgBadge(msgs) {
+  // ── Intercepter localStorage pour sync auto Firestore ──
+  var _origSetItem = localStorage.setItem.bind(localStorage);
+  localStorage.setItem = function(key, value) {
+    _origSetItem(key, value);
+    try {
+      var data = JSON.parse(value);
+      if (!Array.isArray(data)) return;
+      var colName = null;
+      if (key === 'vp3_entries')   colName = 'entries';
+      if (key === 'vp3_messages')  colName = 'messages';
+      if (key === 'vp3_nc')        colName = 'nonConformites';
+      if (key === 'vp3_accounts')  colName = 'accounts';
+      if (key === 'vp3_archives')  colName = 'archives';
+      if (key === 'vp3_planning')  colName = 'planning';
+      if (!colName) return;
+      data.forEach(function(item) {
+        if (item && item.id) {
+          var doc = Object.assign({}, item, { _sync: ts() });
+          docR(colName, item.id).set(doc).catch(function(){});
+        }
+      });
+    } catch(err) {}
+  };
+
+  // ── Badge admin ──
+  function updateAdminBadge(msgs) {
     var unread = msgs.filter(function(m){ return !m.read && m.to === 'admin'; }).length;
-    // Chercher ou creer le badge admin
     var btn = document.querySelector('[onclick="openAdminMessaging()"]');
     if (!btn) return;
     var badge = document.getElementById('adminMsgBadge');
     if (!badge) {
       badge = document.createElement('span');
       badge.id = 'adminMsgBadge';
-      badge.style.cssText = 'position:absolute;top:-4px;right:-4px;background:#FF3B4E;color:#fff;font-size:10px;font-weight:700;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-family:monospace';
+      badge.style.cssText = 'position:absolute;top:-5px;right:-5px;background:#FF3B4E;color:#fff;font-size:10px;font-weight:700;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center';
       btn.style.position = 'relative';
       btn.appendChild(badge);
     }
-    if (unread > 0) {
-      badge.textContent = unread;
-      badge.style.display = 'flex';
-    } else {
-      badge.style.display = 'none';
-    }
+    badge.textContent = unread;
+    badge.style.display = unread > 0 ? 'flex' : 'none';
   }
 
-  // Rafraichir thread admin si modale ouverte
+  // ── Rendu thread admin (modale ouverte) ──
   function refreshAdminThread(msgs) {
     var thread = document.getElementById('adminMsgThread');
     if (!thread) return;
-    if (!msgs.length) {
-      thread.innerHTML = '<div style="text-align:center;color:#555;padding:20px;font-size:13px">Aucun message</div>';
-      return;
-    }
-    thread.innerHTML = msgs.map(function(m) {
+    thread.innerHTML = msgs.length ? msgs.map(function(m) {
       var isMine = m.from === 'admin';
       var time = new Date(m.date).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
       var bg = isMine ? 'linear-gradient(135deg,#2196F3,#1565C0)' : '#1a1a1a';
@@ -4911,81 +4926,90 @@ function showToast(msg,isErr=false){
         '<div style="font-size:13px;color:#fff">' + e(m.text) + '</div>' +
         '<div style="font-size:9px;color:rgba(255,255,255,.4);margin-top:4px;text-align:right">' + who + ' - ' + time + '</div>' +
         '</div></div>';
-    }).join('');
+    }).join('') : '<div style="text-align:center;color:#555;padding:20px;font-size:13px">Aucun message</div>';
     thread.scrollTop = thread.scrollHeight;
   }
 
+  // ── Listeners Firestore temps reel ──
   function startListeners() {
+
+    // Messages
     col('messages').onSnapshot(function(snap) {
       var msgs = snap.docs.map(toJS).filter(Boolean).sort(function(a,b){
         return (a.date||'') > (b.date||'') ? 1 : -1;
       });
-      localStorage.setItem('vp3_messages', JSON.stringify(msgs));
-
+      _origSetItem('vp3_messages', JSON.stringify(msgs));
       if (window.S && S.role === 'admin') {
         refreshAdminThread(msgs);
-        updateAdminMsgBadge(msgs);
-        // Toast si nouveau message agent
+        updateAdminBadge(msgs);
         var unread = msgs.filter(function(m){ return !m.read && m.to === 'admin'; });
         if (unread.length > 0) {
           var last = unread[unread.length - 1];
-          if (typeof showToast === 'function') showToast('Agent : ' + (last.text||'').slice(0,40));
+          if (typeof showToast === 'function') showToast('Message agent : ' + (last.text||'').slice(0,40));
         }
       } else {
-        // Role agent
         if (typeof renderMsgThread === 'function') renderMsgThread();
         if (typeof updateMsgBadge === 'function') updateMsgBadge();
       }
     }, function(){});
 
+    // Entries (main courante)
     col('entries').onSnapshot(function(snap) {
-      var remote = snap.docs.map(toJS).filter(Boolean);
+      var remote = snap.docs.map(toJS).filter(Boolean).sort(function(a,b){
+        return (a.ts||a.date||'') > (b.ts||b.date||'') ? -1 : 1;
+      });
       if (!remote.length) return;
-      localStorage.setItem('vp3_entries', JSON.stringify(remote));
+      _origSetItem('vp3_entries', JSON.stringify(remote));
+      if (window.S) S.entries = remote;
+      if (typeof renderEntries === 'function') renderEntries();
       if (typeof renderAdminLogbook === 'function') renderAdminLogbook();
       if (typeof updateAdminStats === 'function') updateAdminStats();
-      if (typeof renderEntries === 'function') renderEntries();
     }, function(){});
 
+    // Non-conformites
     col('nonConformites').onSnapshot(function(snap) {
       var remote = snap.docs.map(toJS).filter(Boolean);
       if (!remote.length) return;
+      _origSetItem('vp3_nc', JSON.stringify(remote));
       if (window.S) S.nonConformites = remote;
       if (typeof renderNCList === 'function') renderNCList();
+      if (typeof updateClientNCKpi === 'function') updateClientNCKpi();
+      if (typeof updateSiteStatus === 'function') updateSiteStatus();
+      // Notif pour admin et agent
+      if (window.S && (S.role === 'admin' || S.role === 'agent')) {
+        var newNC = remote.filter(function(n){ return n.status === 'open'; });
+        if (newNC.length > 0 && typeof showToast === 'function') {
+          showToast('NC : ' + newNC[newNC.length-1].catLabel + ' — ' + (newNC[newNC.length-1].lieu||''));
+        }
+      }
+    }, function(){});
+
+    // Planning
+    col('planning').onSnapshot(function(snap) {
+      var remote = snap.docs.map(toJS).filter(Boolean);
+      if (!remote.length) return;
+      _origSetItem('vp3_planning', JSON.stringify(remote));
+      if (window.S) S.planning = remote;
+    }, function(){});
+
+    // Archives
+    col('archives').onSnapshot(function(snap) {
+      var remote = snap.docs.map(toJS).filter(Boolean);
+      if (!remote.length) return;
+      _origSetItem('vp3_archives', JSON.stringify(remote));
+      if (window.S) S.archives = remote;
+      if (typeof renderAdminArchives === 'function') renderAdminArchives();
     }, function(){});
   }
-
-  // Patch saveMessages
-  var _origSaveMsg = window.saveMessages;
-  window.saveMessages = function(msgs) {
-    if (_origSaveMsg) _origSaveMsg.apply(this, arguments);
-    (msgs||[]).forEach(function(m) {
-      if (m.id) docR('messages', m.id).set(Object.assign({}, m, {_sync: ts()})).catch(function(){});
-    });
-  };
-
-  // Patch saveEntries
-  var _origSaveE = window.saveEntries;
-  window.saveEntries = function() {
-    if (_origSaveE) _origSaveE.apply(this, arguments);
-    var entries = JSON.parse(localStorage.getItem('vp3_entries') || '[]');
-    entries.forEach(function(en) {
-      if (en.id) docR('entries', en.id).set(Object.assign({}, en, {_sync: ts()})).catch(function(){});
-    });
-  };
 
   // Patch loginSuccess
   var _origLogin = window.loginSuccess;
   window.loginSuccess = function() {
     if (_origLogin) _origLogin.apply(this, arguments);
     startListeners();
-    var accounts = JSON.parse(localStorage.getItem('vp3_accounts') || '[]');
-    accounts.forEach(function(a) {
-      if (a.id) docR('accounts', a.id).set(Object.assign({}, a, {_sync: ts()})).catch(function(){});
-    });
   };
 
-  console.log('Firebase OK');
+  console.log('Firebase OK - sync localStorage intercept actif');
 })();
 </script>
 
