@@ -2,8 +2,24 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>VigiloPro — Sécurité 2.0</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="VigiloPro">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="application-name" content="VigiloPro">
+<meta name="description" content="La main courante intelligente pour la sécurité privée">
+
+<!-- Icône Apple (iOS) -->
+<link rel="apple-touch-icon" href="icon-192.png">
+<!-- Splash screen iOS -->
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Share+Tech+Mono&family=Cormorant:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
@@ -90,6 +106,12 @@ window._fbLoadPromise.then(async (loaded) => {
   const db     = firebase.firestore();
   const fbAuth = firebase.auth();
 
+  // ── Forcer mode REST (évite WebChannel bloqué par certains réseaux/VPN) ──
+  db.settings({
+    experimentalForceLongPolling: true,
+    merge: true
+  });
+
   // ── Activer la persistance offline (cache local Firestore) ──
   db.enablePersistence({ synchronizeTabs: true }).catch(e => {
     if (e.code === 'failed-precondition') console.warn('Persistence: multi-onglets');
@@ -103,10 +125,11 @@ window._fbLoadPromise.then(async (loaded) => {
       await fbAuth.signInAnonymously();
       const el = document.getElementById('fbStatus');
       if (el) el.innerHTML = '<span style="color:var(--green)">✅ Connecté</span>';
+      console.log('🔥 Firebase Auth OK');
     } catch(e) {
-      if (authRetries < 3) {
+      if (authRetries < 5) {
         authRetries++;
-        setTimeout(tryAuth, 3000 * authRetries);
+        setTimeout(tryAuth, 2000 * authRetries);
       } else {
         console.warn('Firebase auth échoué — mode local actif');
       }
@@ -182,8 +205,12 @@ window.FB.listenMessages = (user, cb) => {
   return col('messages')
     .onSnapshot(snap => {
       const all = colToArray(snap)
-        .filter(m => m.from===user || m.to===user || m.to==='all')
-        .sort((a,b) => (a.sentAt||'') > (b.sentAt||'') ? 1 : -1);
+        .filter(m => {
+          if (user === 'admin') return m.to === 'admin' || m.from === 'admin';
+          // Pour un agent : messages envoyés par lui ou destinés à lui
+          return m.from === user || m.to === user || m.to === 'agent';
+        })
+        .sort((a,b) => (a.sentAt||a.date||'') > (b.sentAt||b.date||'') ? 1 : -1);
       cb(all);
     }, e => console.error(e));
 };
@@ -2904,85 +2931,75 @@ function toggleAI() {
 
 async function analyzeVoiceWithAI(transcript) {
   showToast('🤖 Analyse en cours…');
+
+  // ── Analyse locale par mots-clés (fonctionne sans API) ──
+  const t = transcript.toLowerCase();
+
+  // Détection catégorie
+  let cat = 'Autre', sev = 'normal';
+  const rules = [
+    { keys:['incendie','feu','fumée','flamme','brûle'], cat:'Alarme', sev:'critique' },
+    { keys:['alarme','sirène','déclenchement','intrusion'], cat:'Alarme', sev:'urgent' },
+    { keys:['malaise','blessé','accident','urgence médicale','secours','évanoui','inconscient'], cat:'Intervention', sev:'urgent' },
+    { keys:['agression','violence','bagarre','menace','armé'], cat:'Incident', sev:'critique' },
+    { keys:['intervention','sécuriser','interpeller','individu'], cat:'Intervention', sev:'urgent' },
+    { keys:['porte','accès','badge','vigik','coupe-feu','fermée','ouverte','bloquée'], cat:'Accès', sev:'normal' },
+    { keys:['panne','fuite','eau','électrique','ascenseur','climatisation','technique','coupure'], cat:'Technique', sev:'normal' },
+    { keys:['visiteur','livraison','prestataire','intervenant','technicien'], cat:'Visiteur', sev:'info' },
+    { keys:['ronde','pointage','tour','zone'], cat:'Ronde', sev:'normal' },
+    { keys:['dégradation','tag','vandalisme','cassé','brisé'], cat:'Incident', sev:'urgent' },
+  ];
+  for (const r of rules) {
+    if (r.keys.some(k => t.includes(k))) { cat = r.cat; sev = r.sev; break; }
+  }
+
+  // Détection lieu
+  const lieuPatterns = [
+    /(?:au?|en|dans|niveau|zone|hall|parking|entrée|escalier|couloir|bureau|étage)\s+([a-z0-9\s-]{2,25})/i,
+    /(?:porte|local|salle)\s+([a-z0-9\s-]{1,20})/i,
+  ];
+  let lieu = S.session?.site || '—';
+  for (const p of lieuPatterns) {
+    const m = transcript.match(p);
+    if (m) { lieu = m[0].trim(); break; }
+  }
+
+  // Reformulation professionnelle
+  const reformulations = {
+    'Alarme':       `Déclenchement signalé — ${transcript}.`,
+    'Incident':     `Incident constaté — ${transcript}.`,
+    'Intervention': `Intervention requise — ${transcript}.`,
+    'Accès':        `Anomalie d'accès signalée — ${transcript}.`,
+    'Technique':    `Défaut technique constaté — ${transcript}.`,
+    'Visiteur':     `Passage enregistré — ${transcript}.`,
+    'Ronde':        `Compte-rendu de ronde — ${transcript}.`,
+    'Autre':        transcript,
+  };
+  const desc = reformulations[cat] || transcript;
+
+  const parsed = { cat, sev, lieu, desc };
+
   const modal = document.createElement('div');
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+  const sevColors = {info:'var(--text3)',normal:'var(--green)',urgent:'var(--gold)',critique:'var(--red)'};
   modal.innerHTML = `
     <div style="background:#111;border:1px solid var(--gold);border-radius:20px;padding:24px;width:100%;max-width:390px">
-      <div style="font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:700;color:var(--gold);text-align:center;margin-bottom:14px">🤖 Analyse IA Vocale</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:700;color:var(--gold);text-align:center;margin-bottom:14px">🤖 Analyse Vocale</div>
       <div style="font-size:11px;color:var(--text4);margin-bottom:8px">Transcription :</div>
       <div style="font-size:12px;color:var(--text2);background:var(--bg3);border-radius:8px;padding:10px;margin-bottom:14px;line-height:1.5;font-style:italic">"${esc(transcript)}"</div>
-      <div id="aiAnalysisResult" style="font-size:12px;color:var(--gold);text-align:center;padding:16px">
-        <div style="font-size:24px;margin-bottom:8px">⏳</div>Analyse en cours…
+      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+        <span style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:4px 10px;font-size:11px;color:#fff">${parsed.cat}</span>
+        <span style="background:var(--bg3);border:1px solid ${sevColors[parsed.sev]};border-radius:6px;padding:4px 10px;font-size:11px;color:${sevColors[parsed.sev]}">${parsed.sev.toUpperCase()}</span>
+        <span style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:4px 10px;font-size:11px;color:var(--text3)">📍 ${esc(parsed.lieu)}</span>
       </div>
-      <div id="aiActionBtns" style="display:none;margin-top:12px;display:flex;flex-direction:column;gap:8px"></div>
-      <button onclick="this.closest('div[style*=fixed]').remove()" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:11px;font-family:'Cormorant Garamond',serif;font-size:13px;color:var(--text3);cursor:pointer;margin-top:12px">Fermer</button>
+      <div style="font-size:13px;color:var(--text2);line-height:1.5;background:var(--bg4);border-radius:8px;padding:10px;margin-bottom:14px">${esc(parsed.desc)}</div>
+      <button onclick="addEntry('${parsed.cat}','${parsed.sev}',\`${parsed.desc.replace(/`/g,"'")}\`,'${parsed.lieu.replace(/'/g,"\\'")}');this.closest('div[style*=fixed]').remove();showToast('✅ Ajouté à la main courante')" 
+        style="width:100%;background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;border-radius:10px;padding:13px;font-family:'Cormorant Garamond',serif;font-size:14px;font-weight:700;color:#000;cursor:pointer;margin-bottom:8px">
+        ✅ Ajouter à la Main Courante
+      </button>
+      <button onclick="this.closest('div[style*=fixed]').remove()" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:11px;font-family:'Cormorant Garamond',serif;font-size:13px;color:var(--text3);cursor:pointer">Annuler</button>
     </div>`;
   document.body.appendChild(modal);
-
-  try {
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 400,
-        messages: [{
-          role: 'user',
-          content: `Tu es un assistant pour agent de sécurité SSIAP. Analyse cette dictée vocale et extrais:
-1. Catégorie (Alarme/Incident/Intervention/Technique/Accès/Visiteur/Ronde/Autre)
-2. Sévérité (info/normal/urgent/critique)
-3. Zone/lieu mentionné
-4. Description reformulée professionnellement (max 2 phrases)
-
-Dictée: "${transcript}"
-
-Réponds UNIQUEMENT en JSON: {"cat":"...","sev":"...","lieu":"...","desc":"..."}`
-        }]
-      })
-    });
-    const data = await resp.json();
-    const text = data.content?.[0]?.text || '';
-    let parsed;
-    try { parsed = JSON.parse(text.replace(/```json|```/g, '').trim()); } catch(e) { parsed = null; }
-
-    const resultEl = modal.querySelector('#aiAnalysisResult');
-    const actionEl = modal.querySelector('#aiActionBtns');
-
-    if (parsed) {
-      const sevColors = {info:'var(--text3)',normal:'var(--green)',urgent:'var(--gold)',critique:'var(--red)'};
-      resultEl.innerHTML = `
-        <div style="text-align:left">
-          <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
-            <span style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:4px 10px;font-size:11px;color:#fff">${parsed.cat}</span>
-            <span style="background:var(--bg3);border:1px solid ${sevColors[parsed.sev]||'var(--border2)'};border-radius:6px;padding:4px 10px;font-size:11px;color:${sevColors[parsed.sev]||'#fff'}">${parsed.sev.toUpperCase()}</span>
-            ${parsed.lieu ? `<span style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:4px 10px;font-size:11px;color:var(--text3)">📍 ${esc(parsed.lieu)}</span>` : ''}
-          </div>
-          <div style="font-size:13px;color:var(--text2);line-height:1.5;background:var(--bg4);border-radius:8px;padding:10px">${esc(parsed.desc)}</div>
-        </div>`;
-      actionEl.style.display = 'flex';
-      actionEl.innerHTML = `
-        <button onclick="addEntry('${parsed.cat}','${parsed.sev}','${parsed.desc.replace(/'/g,"\\'")}','${(parsed.lieu||'—').replace(/'/g,"\\'")}');this.closest('div[style*=fixed]').remove();showToast('✅ Ajouté à la main courante')" 
-          style="width:100%;background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;border-radius:10px;padding:12px;font-family:'Cormorant Garamond',serif;font-size:14px;font-weight:700;color:#000;cursor:pointer">
-          ✅ Ajouter à la Main Courante
-        </button>`;
-    } else {
-      resultEl.innerHTML = `<div style="color:var(--text3);font-size:12px;line-height:1.5">${esc(text)}</div>`;
-      actionEl.style.display = 'flex';
-      actionEl.innerHTML = `
-        <button onclick="addEntry('Autre','normal','${transcript.replace(/'/g,"\\'")}');this.closest('div[style*=fixed]').remove();showToast('✅ Ajouté')" 
-          style="width:100%;background:var(--bg3);border:1px solid var(--gold);border-radius:10px;padding:11px;font-family:'Cormorant Garamond',serif;font-size:13px;color:var(--gold);cursor:pointer">
-          Ajouter tel quel
-        </button>`;
-    }
-  } catch(e) {
-    modal.querySelector('#aiAnalysisResult').innerHTML =
-      `<div style="color:var(--red);font-size:12px">⚠ Analyse impossible (pas de connexion IA)</div>
-       <div style="color:var(--text4);font-size:11px;margin-top:6px">La transcription a été enregistrée</div>`;
-    // Fallback : ajouter quand même la transcription brute
-    setTimeout(() => {
-      addEntry('Autre', 'normal', transcript);
-    }, 500);
-  }
 }
 
 // ===== PATROL =====
@@ -3911,9 +3928,30 @@ function getSiteEmail(siteName) {
 }
 
 function showEndShiftModal(archive) {
+  // ── Envoyer la main courante à l'Admin via message Firebase ──
+  const entries = S.entries.filter(e => e.date === archive.date);
+  const nbUrgent = entries.filter(e=>e.sev==='urgent'||e.sev==='critique').length;
+  const summary = entries.slice(0,10).map(e=>`[${e.time}] ${e.cat} (${e.sev}) — ${e.desc.slice(0,60)}`).join('\n');
+
+  const transmissionMsg = {
+    id: Date.now(),
+    from: 'agent',
+    fromName: archive.agent,
+    to: 'admin',
+    date: new Date().toISOString(),
+    read: false,
+    type: 'fin_service',
+    text: `📋 FIN DE SERVICE — ${archive.agent}\n🏢 ${archive.site} | ${archive.date} | ${archive.heureDebut}→${archive.heureFin}\n📊 ${entries.length} événements (${nbUrgent} urgents)\n\n${summary}${entries.length>10?`\n... et ${entries.length-10} autres événements`:''}`,
+  };
+
+  // Envoyer à Firebase (Admin le verra en temps réel)
+  if(window.FB && navigator.onLine) {
+    window.FB.sendMessage(transmissionMsg).catch(console.error);
+  }
+
   const modal = document.createElement('div');
   modal.id = 'endShiftModal';
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
   modal.innerHTML = `
     <div style="background:#111;border:1px solid var(--gold);border-radius:20px;padding:28px 24px;width:100%;max-width:390px">
       <div style="text-align:center;margin-bottom:22px">
@@ -3923,7 +3961,7 @@ function showEndShiftModal(archive) {
       </div>
 
       <div style="background:var(--bg3);border-radius:12px;padding:16px;margin-bottom:16px">
-        <div style="font-size:11px;color:var(--text4);font-family:'Share Tech Mono',monospace;margin-bottom:10px;letter-spacing:0.1px">RÉCAPITULATIF VACATION</div>
+        <div style="font-size:11px;color:var(--text4);font-family:'Share Tech Mono',monospace;margin-bottom:10px">RÉCAPITULATIF</div>
         <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)">
           <span style="font-size:13px;color:var(--text3)">👮 Agent</span>
           <span style="font-size:13px;color:#fff;font-weight:600">${esc(archive.agent)}</span>
@@ -3932,36 +3970,42 @@ function showEndShiftModal(archive) {
           <span style="font-size:13px;color:var(--text3)">🏢 Site</span>
           <span style="font-size:13px;color:#fff;font-weight:600">${esc(archive.site)}</span>
         </div>
-        <div style="display:flex;justify-content:space-between;padding:7px 0">
+        <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)">
           <span style="font-size:13px;color:var(--text3)">📋 Événements</span>
-          <span style="font-size:13px;color:var(--gold);font-weight:700">${archive.nbEntries}</span>
+          <span style="font-size:13px;color:var(--gold);font-weight:700">${entries.length}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:7px 0">
+          <span style="font-size:13px;color:var(--text3)">⚡ Urgents</span>
+          <span style="font-size:13px;color:${nbUrgent>0?'var(--red)':'var(--green)'};font-weight:700">${nbUrgent}</span>
         </div>
       </div>
 
       <div style="background:var(--bg3);border-radius:12px;padding:16px;margin-bottom:20px">
-        <div style="font-size:11px;color:var(--text4);font-family:'Share Tech Mono',monospace;margin-bottom:10px;letter-spacing:0.1px">NOTIFICATIONS ENVOYÉES</div>
+        <div style="font-size:11px;color:var(--text4);font-family:'Share Tech Mono',monospace;margin-bottom:10px">TRANSMISSIONS AUTOMATIQUES</div>
         <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
-          <span style="font-size:16px">⚙️</span>
-          <div style="flex:1">
-            <div style="font-size:12px;color:var(--text2);font-weight:600">Employeur</div>
-            <div style="font-size:11px;color:var(--text4);font-family:'Share Tech Mono',monospace">${esc(archive.emailEmployeur)}</div>
+          <span style="font-size:22px">✅</span>
+          <div>
+            <div style="font-size:12px;color:var(--green);font-weight:600">Main courante → Employeur</div>
+            <div style="font-size:11px;color:var(--text4)">Visible en temps réel dans son interface</div>
           </div>
-          <span style="font-size:18px">📨</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+          <span style="font-size:22px">✅</span>
+          <div>
+            <div style="font-size:12px;color:var(--green);font-weight:600">Archives → Client</div>
+            <div style="font-size:11px;color:var(--text4)">En attente de validation client</div>
+          </div>
         </div>
         <div style="display:flex;align-items:center;gap:10px;padding:8px 0">
-          <span style="font-size:16px">🏢</span>
-          <div style="flex:1">
-            <div style="font-size:12px;color:var(--text2);font-weight:600">Client — ${esc(archive.site)}</div>
-            <div style="font-size:11px;color:var(--text4);font-family:'Share Tech Mono',monospace">${esc(archive.emailClient)}</div>
+          <span style="font-size:22px">📄</span>
+          <div>
+            <div style="font-size:12px;color:var(--blue);font-weight:600">PDF généré</div>
+            <div style="font-size:11px;color:var(--text4)">Rapport de fin de service</div>
           </div>
-          <span style="font-size:18px">📨</span>
-        </div>
-        <div style="margin-top:10px;padding:8px;background:var(--green-dim);border:1px solid var(--green);border-radius:8px;text-align:center">
-          <span style="font-size:11px;color:var(--green)">✅ Main courante disponible dans l'interface Admin & Client</span>
         </div>
       </div>
 
-      <button onclick="closeEndShiftModal()" style="width:100%;padding:14px;background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;border-radius:12px;font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:700;color:#000;cursor:pointer;letter-spacing:0.1px">
+      <button onclick="closeEndShiftModal()" style="width:100%;padding:14px;background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;border-radius:12px;font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:700;color:#000;cursor:pointer">
         🏠 RETOUR ACCUEIL
       </button>
     </div>`;
@@ -5830,6 +5874,17 @@ function showToast(msg,isErr=false){
   void t.offsetWidth;
   t.classList.add('show');
   _toastTimeout = setTimeout(()=>{ t.classList.remove('show'); }, 2500);
+}
+</script>
+
+<!-- PWA — Enregistrement Service Worker -->
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js')
+      .then(reg => console.log('✅ Service Worker enregistré'))
+      .catch(err => console.warn('SW non enregistré:', err));
+  });
 }
 </script>
 </body>
