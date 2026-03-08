@@ -26,10 +26,10 @@
 <!-- ═══════════════════════════════════════════════════════
      FIREBASE SDK v9 compat (global window, pas de module)
      ═══════════════════════════════════════════════════════ -->
-<!-- Firebase SDK — chargement synchrone bloquant -->
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js" defer="false"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js" defer="false"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js" defer="false"></script>
+<!-- Firebase SDK v9 compat -->
+<script src="https://cdn.jsdelivr.net/npm/firebase@9.22.0/compat/app/dist/index.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@9.22.0/compat/auth/dist/index.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@9.22.0/compat/firestore/dist/index.js"></script>
 <script>
 // Firebase chargé de façon synchrone — window.FB disponible immédiatement après init
 window._fbReady = (typeof firebase !== 'undefined');
@@ -280,7 +280,6 @@ window.FB.init = async () => {
   }
   if (navigator.onLine) await flushOfflineQueue();
   console.log('🔥 Firebase prêt');
-  console.log('🔥 Firebase connecté');
   const el = document.getElementById('fbStatus');
   if (el) el.innerHTML = '<span style="color:var(--green)">✅ Connecté à Firebase Firestore</span>';
 };
@@ -290,7 +289,7 @@ window.FB.init = async () => {
     console.warn('Auth anonyme échouée — mode dégradé');
   });
 
-  console.log('🔥 initFirebase() terminé — window.FB =', typeof window.FB);
+  console.log('✅ window.FB prêt');
 
   } catch(err) {
     console.error('❌ initFirebase() ERREUR:', err.message, err.stack);
