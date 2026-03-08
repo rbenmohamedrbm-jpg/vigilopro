@@ -26,10 +26,10 @@
 <!-- ═══════════════════════════════════════════════════════
      FIREBASE SDK v9 compat (global window, pas de module)
      ═══════════════════════════════════════════════════════ -->
-<!-- Firebase SDK — chargement direct gstatic (le plus fiable) -->
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<!-- Firebase SDK — chargement synchrone bloquant -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js" defer="false"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js" defer="false"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js" defer="false"></script>
 <script>
 // Firebase chargé de façon synchrone — window.FB disponible immédiatement après init
 window._fbReady = (typeof firebase !== 'undefined');
@@ -52,13 +52,17 @@ window.FB = null;
 
 (function initFirebase() {
   if (typeof firebase === 'undefined') {
-    console.warn('Firebase SDK absent — mode offline');
+    console.error('❌ Firebase SDK non chargé — vérifie la connexion internet');
     return;
   }
-
+  console.log('✅ Firebase SDK présent, initialisation...');
+  try {
   if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+  console.log('✅ firebase.initializeApp OK');
   const db = firebase.firestore();
+  console.log('✅ firestore() OK');
   const fbAuth = firebase.auth();
+  console.log('✅ auth() OK');
 
   db.settings({ experimentalForceLongPolling: true, merge: true });
   db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
@@ -77,8 +81,9 @@ window.FB = null;
   }
   function colToArray(snap) { return snap.docs.map(toJS); }
 
-  // ── window.FB opérationnel immédiatement ──
+  // ── window.FB opérationnel ──
   window.FB = {};
+  console.log('✅ window.FB assigné');
 
 // ENTRIES
 window.FB.addEntry = async (entry) => {
@@ -282,9 +287,15 @@ window.FB.init = async () => {
 
   // ── Auth anonyme ──
   fbAuth.signInAnonymously().catch(() => {
-    // Auth échouée — Firestore fonctionne quand même en lecture/écriture (règles test)
     console.warn('Auth anonyme échouée — mode dégradé');
   });
+
+  console.log('🔥 initFirebase() terminé — window.FB =', typeof window.FB);
+
+  } catch(err) {
+    console.error('❌ initFirebase() ERREUR:', err.message, err.stack);
+    window.FB = null;
+  }
 
 })(); // fin initFirebase()
 </script>
