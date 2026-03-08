@@ -2894,11 +2894,13 @@ function toggleAI() {
   aiSpeechRecognition = new SR();
   aiSpeechRecognition.lang = 'fr-FR';
   aiSpeechRecognition.continuous = true;
-  aiSpeechRecognition.interimResults = true;
+  aiSpeechRecognition.interimResults = false; // Pas d'intermédiaires = pas de répétitions
   aiTranscriptFull = '';
+  let lastResultIndex = 0; // Tracker pour ne pas recapturer les anciens résultats
 
   aiSpeechRecognition.onstart = () => {
     aiListening = true;
+    lastResultIndex = 0;
     const btn = document.getElementById('aiBtnEl');
     if (btn) { btn.className = 'ai-btn ai-off'; }
     document.getElementById('aiBtnIcon').textContent = '⏹';
@@ -2907,21 +2909,23 @@ function toggleAI() {
   };
 
   aiSpeechRecognition.onresult = (e) => {
-    let final = '';
-    for (let i = 0; i < e.results.length; i++) {
-      if (e.results[i].isFinal) final += e.results[i][0].transcript + ' ';
+    // Ne prendre QUE les nouveaux résultats depuis le dernier index traité
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) {
+        aiTranscriptFull += e.results[i][0].transcript + ' ';
+      }
     }
-    if (final) aiTranscriptFull = final;
   };
 
   aiSpeechRecognition.onerror = (e) => {
+    if (e.error === 'no-speech') return; // Silence normal, ignorer
     aiListening = false;
     showToast('⚠ Erreur micro: ' + e.error, true);
   };
 
   aiSpeechRecognition.onend = () => {
     if (aiListening) {
-      // Redémarrage auto (continuous peut s'arrêter seul)
+      // Redémarrage auto (continuous peut s'arrêter seul sur mobile)
       try { aiSpeechRecognition.start(); } catch(e) { aiListening = false; }
     }
   };
@@ -5713,6 +5717,13 @@ function submitAnomalieReport() {
 async function testFirebaseConnection() {
   const statusEl = document.getElementById('fbStatus');
   if(statusEl) statusEl.innerHTML = '<span style="color:#FFA500">⏳ Diagnostic en cours…</span>';
+
+  // Attendre que Firebase soit initialisé (max 5 secondes)
+  let waited = 0;
+  while (!window.FB && waited < 5000) {
+    await new Promise(r => setTimeout(r, 300));
+    waited += 300;
+  }
 
   // 1. Vérifier HTTPS
   const isHttps = location.protocol === 'https:';
