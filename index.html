@@ -92,12 +92,12 @@ const FIREBASE_CONFIG = {
 // window.FB stub — actif immédiatement, opérationnel après init
 window.FB = null;
 
-// Initialisation différée — attend que le SDK soit chargé
+// Initialisation Firebase dès le chargement — pas besoin d'attendre le login
 window._fbLoadPromise.then(async (loaded) => {
   if (!loaded || typeof firebase === 'undefined') {
     console.warn('🔥 Firebase SDK non disponible — mode offline uniquement');
     const el = document.getElementById('fbStatus');
-    if (el) el.innerHTML = '<span style="color:var(--red)">❌ SDK non chargé — ouvre le fichier via un serveur web (Netlify, VS Code Live Server…)</span>';
+    if (el) el.innerHTML = '<span style="color:var(--red)">❌ SDK non chargé</span>';
     return;
   }
 
@@ -328,7 +328,7 @@ async function flushOfflineQueue() {
     } catch(e) { remaining.push(item); }
   }
   localStorage.setItem('vp3_offlineQueue', JSON.stringify(remaining));
-  if (remaining.length < queue.length) showToast(`✅ ${queue.length - remaining.length} élément(s) synchronisé(s)`);
+  if (remaining.length < queue.length) console.log(`✅ ${queue.length - remaining.length} élément(s) synchronisé(s)`);
 }
 window.addEventListener('online',  () => { showToast('📶 Connexion rétablie — sync...'); setTimeout(flushOfflineQueue, 1000); });
 window.addEventListener('offline', () => showToast('📵 Hors-ligne — données locales', true));
@@ -351,7 +351,7 @@ window.FB.init = async () => {
   }
   if (navigator.onLine) await flushOfflineQueue();
   console.log('🔥 Firebase prêt');
-  showToast('🔥 Firebase connecté !');
+  console.log('🔥 Firebase connecté');
   // Mettre à jour le statut dans l'UI admin
   const el = document.getElementById('fbStatus');
   if (el) el.innerHTML = '<span style="color:var(--green)">✅ Connecté à Firebase Firestore</span>';
@@ -2909,10 +2909,14 @@ function toggleAI() {
   };
 
   aiSpeechRecognition.onresult = (e) => {
-    // Ne prendre QUE les nouveaux résultats depuis le dernier index traité
+    // Prendre uniquement les nouveaux résultats finaux
     for (let i = e.resultIndex; i < e.results.length; i++) {
       if (e.results[i].isFinal) {
-        aiTranscriptFull += e.results[i][0].transcript + ' ';
+        const newText = e.results[i][0].transcript.trim();
+        // Anti-doublon : ne pas ajouter si déjà présent dans le transcript
+        if (newText && !aiTranscriptFull.toLowerCase().includes(newText.toLowerCase())) {
+          aiTranscriptFull += newText + ' ';
+        }
       }
     }
   };
@@ -2924,9 +2928,13 @@ function toggleAI() {
   };
 
   aiSpeechRecognition.onend = () => {
-    if (aiListening) {
-      // Redémarrage auto (continuous peut s'arrêter seul sur mobile)
+    // PAS de redémarrage auto — évite les doublons sur Android
+    // L'agent parle puis appuie sur "Arrêter & Analyser"
+    if (aiListening && !aiTranscriptFull.trim()) {
+      // Seulement si rien capté, redémarrer une seule fois
       try { aiSpeechRecognition.start(); } catch(e) { aiListening = false; }
+    } else {
+      aiListening = false;
     }
   };
 
@@ -4173,21 +4181,17 @@ function exportPDF(archive){
 
   const fname = archive ? `vigilopro_${dateStr}_${agent.replace(/ /g,'_')}.pdf` : `vigilopro_${dateStr}.pdf`;
 
-  // Blob URL — seule méthode fiable dans Chrome (data URI = page vide, CSP bloque iframe)
+  // Téléchargement direct sans ouvrir de fenêtre navigateur
   const pdfBlob = doc.output('blob');
   const blobUrl = URL.createObjectURL(pdfBlob);
-  const win = window.open(blobUrl, '_blank');
-  if(!win) {
-    // Popup bloquée — fallback lien téléchargement direct
-    const a = document.createElement('a');
-    a.href = blobUrl;
-    a.download = fname;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
-    showToast('📄 PDF téléchargé — vérifiez vos téléchargements');
-  }
+  const a = document.createElement('a');
+  a.href = blobUrl;
+  a.download = fname;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
+  showToast('📄 PDF sauvegardé dans vos téléchargements');
 }
 
 // ===== SITES & CONFIG =====
@@ -5241,30 +5245,20 @@ function syncOfflineQueue() {
   saveEntries();
   renderEntries();
   updateOfflineBanner();
-  showToast('📶 Données synchronisées !');
+  console.log('📶 Données synchronisées');
 }
 
 function updateOfflineBanner() {
-  let banner=document.getElementById('offlineBanner');
-  if(!banner){
-    banner=document.createElement('div');
-    banner.id='offlineBanner';
-    banner.style.cssText='position:fixed;top:0;left:0;right:0;z-index:8888;background:var(--orange);padding:8px 16px;display:flex;align-items:center;justify-content:space-between;font-family:\'Cormorant Garamond\',serif;font-size:13px;font-weight:700;color:#000;display:none';
-    document.body.appendChild(banner);
-  }
-  const n=offlineQueue.length;
-  if(!isOnline()||n>0){
-    banner.style.display='flex';
-    banner.innerHTML=!isOnline()?
-      `<span>📵 Mode hors-ligne — ${n} événement${n>1?'s':''} en attente</span><span style="font-size:10px">Auto-sync dès reconnexion</span>`:
-      `<span>📶 Reconnecté — ${n} événement${n>1?'s':''} à synchroniser</span><button onclick="syncOfflineQueue()" style="background:#000;border:none;border-radius:6px;padding:4px 10px;font-size:11px;color:var(--orange);cursor:pointer">Sync</button>`;
-  } else {
-    banner.style.display='none';
+  // Synchronisation silencieuse — pas de bandeau visible
+  const n = offlineQueue.length;
+  if (isOnline() && n > 0) {
+    // Sync auto silencieuse en arrière-plan
+    setTimeout(syncOfflineQueue, 500);
   }
 }
 
-window.addEventListener('online',  ()=>{ updateOfflineBanner(); setTimeout(syncOfflineQueue,1000); });
-window.addEventListener('offline', ()=>updateOfflineBanner());
+window.addEventListener('online',  ()=>{ setTimeout(syncOfflineQueue, 1000); });
+window.addEventListener('offline', ()=>{});
 
 // ===== HISTORIQUE NC CLIENT =====
 function renderNCHistory() {
