@@ -4834,102 +4834,114 @@ function showToast(msg,isErr=false){
   t.classList.add('show');
   _toastTimeout = setTimeout(()=>{ t.classList.remove('show'); }, 2500);
 }
+</script>
 
-<!-- ═══════════════════════════════════════════
-     FIREBASE — messagerie temps réel
-     ═══════════════════════════════════════════ -->
+<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 <script>
 (function() {
   if (typeof firebase === 'undefined') return;
-
-  const CFG = {
-    apiKey:            "AIzaSyBGtXMiNDkZgW2QrpWHHH9mkEgGgMsjZy0",
-    authDomain:        "vigilopro-4a63f.firebaseapp.com",
-    projectId:         "vigilopro-4a63f",
-    storageBucket:     "vigilopro-4a63f.firebasestorage.app",
+  var CFG = {
+    apiKey: "AIzaSyBGtXMiNDkZgW2QrpWHHH9mkEgGgMsjZy0",
+    authDomain: "vigilopro-4a63f.firebaseapp.com",
+    projectId: "vigilopro-4a63f",
+    storageBucket: "vigilopro-4a63f.firebasestorage.app",
     messagingSenderId: "662305602141",
-    appId:             "1:662305602141:web:5cdb95de155858221debb4"
+    appId: "1:662305602141:web:5cdb95de155858221debb4"
   };
-
   if (!firebase.apps.length) firebase.initializeApp(CFG);
-  const db  = firebase.firestore();
+  var db = firebase.firestore();
   db.settings({ experimentalForceLongPolling: true, merge: true });
-  db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
-  firebase.auth().signInAnonymously().catch(() => {});
-
-  const col  = n      => db.collection(n);
-  const docR = (n,id) => db.collection(n).doc(String(id));
-  const ts   = ()     => firebase.firestore.FieldValue.serverTimestamp();
-
+  db.enablePersistence({ synchronizeTabs: true }).catch(function(){});
+  firebase.auth().signInAnonymously().catch(function(){});
+  function col(n) { return db.collection(n); }
+  function docR(n, id) { return db.collection(n).doc(String(id)); }
+  function ts() { return firebase.firestore.FieldValue.serverTimestamp(); }
   function toJS(d) {
     if (!d.exists) return null;
-    const o = d.data();
-    Object.keys(o).forEach(k => { if(o[k]?.toDate) o[k] = o[k].toDate().toISOString(); });
-    return { id: d.id, ...o };
+    var o = d.data();
+    Object.keys(o).forEach(function(k) {
+      if(o[k] && o[k].toDate) o[k] = o[k].toDate().toISOString();
+    });
+    return Object.assign({ id: d.id }, o);
   }
+  function esc2(t) { return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-  function e(t) { return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-  // ── Rendu thread admin ──
   function refreshAdminThread(msgs) {
-    const thread = document.getElementById('adminMsgThread');
-    if (!thread || !S || S.role !== 'admin') return;
-    thread.innerHTML = msgs.map(m => {
-      const isMine = m.from === 'admin';
-      const time = new Date(m.date).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
-      return `<div style="display:flex;justify-content:${isMine?'flex-end':'flex-start'};margin-bottom:10px">
-        <div style="max-width:80%;background:${isMine?'linear-gradient(135deg,#2196F3,#1565C0)':'#1a1a1a'};border-radius:16px;padding:10px 14px">
-          <div style="font-size:13px;color:#fff">${e(m.text)}</div>
-          <div style="font-size:9px;color:rgba(255,255,255,.4);margin-top:4px;text-align:right">${isMine?'Vous':'👮 '+e(m.fromName||'Agent')} · ${time}</div>
-        </div></div>`;
+    var thread = document.getElementById('adminMsgThread');
+    if (!thread || !window.S || S.role !== 'admin') return;
+    thread.innerHTML = msgs.map(function(m) {
+      var isMine = m.from === 'admin';
+      var time = new Date(m.date).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+      var bg = isMine ? 'linear-gradient(135deg,#2196F3,#1565C0)' : '#1a1a1a';
+      var align = isMine ? 'flex-end' : 'flex-start';
+      var who = isMine ? 'Vous' : ('Agent ' + esc2(m.fromName||''));
+      return '<div style="display:flex;justify-content:' + align + ';margin-bottom:10px">' +
+        '<div style="max-width:80%;background:' + bg + ';border-radius:16px;padding:10px 14px">' +
+        '<div style="font-size:13px;color:#fff">' + esc2(m.text) + '</div>' +
+        '<div style="font-size:9px;color:rgba(255,255,255,.4);margin-top:4px;text-align:right">' + who + ' - ' + time + '</div>' +
+        '</div></div>';
     }).join('');
-    setTimeout(() => thread.scrollTop = thread.scrollHeight, 50);
+    setTimeout(function(){ thread.scrollTop = thread.scrollHeight; }, 50);
   }
 
-  // ── Listener messages temps réel ──
-  function startMsgListener() {
-    col('messages').onSnapshot(snap => {
-      const msgs = snap.docs.map(toJS).filter(Boolean).sort((a,b) => a.date > b.date ? 1 : -1);
+  function startListeners() {
+    col('messages').onSnapshot(function(snap) {
+      var msgs = snap.docs.map(toJS).filter(Boolean).sort(function(a,b){ return a.date > b.date ? 1 : -1; });
       localStorage.setItem('vp3_messages', JSON.stringify(msgs));
       if (typeof renderMsgThread === 'function') renderMsgThread();
       refreshAdminThread(msgs);
       if (typeof updateMsgBadge === 'function') updateMsgBadge();
-    }, () => {});
+    }, function(){});
+
+    col('entries').onSnapshot(function(snap) {
+      var remote = snap.docs.map(toJS).filter(Boolean);
+      if (!remote.length) return;
+      localStorage.setItem('vp3_entries', JSON.stringify(remote));
+      if (typeof renderEntries === 'function') renderEntries();
+      if (typeof renderAdminLogbook === 'function') renderAdminLogbook();
+    }, function(){});
+
+    col('nonConformites').onSnapshot(function(snap) {
+      var remote = snap.docs.map(toJS).filter(Boolean);
+      if (!remote.length) return;
+      if (window.S) S.nonConformites = remote;
+      if (typeof renderNCList === 'function') renderNCList();
+    }, function(){});
   }
 
-  // ── Patch saveMessages — envoie chaque message dans Firestore ──
-  const _origSave = window.saveMessages;
+  var _origSaveMsg = window.saveMessages;
   window.saveMessages = function(msgs) {
-    if (_origSave) _origSave.apply(this, arguments);
-    (msgs||[]).forEach(m => {
-      if (m.id) docR('messages', m.id).set({...m, _sync: ts()}).catch(() => {});
+    if (_origSaveMsg) _origSaveMsg.apply(this, arguments);
+    (msgs||[]).forEach(function(m) {
+      if (m.id) docR('messages', m.id).set(Object.assign({}, m, { _sync: ts() })).catch(function(){});
     });
   };
 
-  // ── Patch saveEntries ──
-  const _origSaveE = window.saveEntries;
+  var _origSaveE = window.saveEntries;
   window.saveEntries = function() {
     if (_origSaveE) _origSaveE.apply(this, arguments);
-    const entries = JSON.parse(localStorage.getItem('vp3_entries') || '[]');
-    entries.forEach(en => { if(en.id) docR('entries', en.id).set({...en, _sync:ts()}).catch(()=>{}); });
+    var entries = JSON.parse(localStorage.getItem('vp3_entries') || '[]');
+    entries.forEach(function(en) {
+      if (en.id) docR('entries', en.id).set(Object.assign({}, en, { _sync: ts() })).catch(function(){});
+    });
   };
 
-  // ── Patch loginSuccess — démarrer les listeners ──
-  const _origLogin = window.loginSuccess;
+  var _origLogin = window.loginSuccess;
   window.loginSuccess = function() {
     if (_origLogin) _origLogin.apply(this, arguments);
-    startMsgListener();
-    // Sync accounts au login
-    const accounts = JSON.parse(localStorage.getItem('vp3_accounts') || '[]');
-    accounts.forEach(a => { if(a.id) docR('accounts', a.id).set({...a, _sync:ts()}).catch(()=>{}); });
+    startListeners();
+    var accounts = JSON.parse(localStorage.getItem('vp3_accounts') || '[]');
+    accounts.forEach(function(a) {
+      if (a.id) docR('accounts', a.id).set(Object.assign({}, a, { _sync: ts() })).catch(function(){});
+    });
   };
 
-  console.log('✅ Firebase temps réel actif');
+  console.log('Firebase OK');
 })();
 </script>
--e 
+
 </body>
 </html>
